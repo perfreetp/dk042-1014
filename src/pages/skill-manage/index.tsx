@@ -1,0 +1,140 @@
+import React, { useState, useEffect } from 'react'
+import { View, Text, Image, ScrollView, Button } from '@tarojs/components'
+import Taro from '@tarojs/taro'
+import classnames from 'classnames'
+import styles from './index.module.scss'
+import { skills } from '@/data/skills'
+import { Skill } from '@/types'
+
+interface PublishedSkill extends Skill {
+  status: 'online' | 'offline'
+}
+
+const SkillManagePage: React.FC = () => {
+  const [mySkills, setMySkills] = useState<PublishedSkill[]>([])
+
+  useEffect(() => {
+    const publishedSkills = skills.slice(0, 3).map(skill => ({
+      ...skill,
+      status: Math.random() > 0.3 ? 'online' : 'offline'
+    })) as PublishedSkill[]
+    console.log('[SkillManage] My skills count:', publishedSkills.length)
+    setMySkills(publishedSkills)
+  }, [])
+
+  const handlePublish = () => {
+    console.log('[SkillManage] Navigate to publish')
+    Taro.switchTab({ url: '/pages/publish/index' })
+  }
+
+  const handleEdit = (skill: PublishedSkill) => {
+    console.log('[SkillManage] Edit skill:', skill.id)
+    Taro.showToast({ title: '编辑功能开发中', icon: 'none' })
+  }
+
+  const handleToggleStatus = (skill: PublishedSkill) => {
+    console.log('[SkillManage] Toggle status:', skill.id, 'current:', skill.status)
+    const newStatus = skill.status === 'online' ? 'offline' : 'online'
+    setMySkills(prev => prev.map(s =>
+      s.id === skill.id ? { ...s, status: newStatus } : s
+    ))
+    Taro.showToast({
+      title: newStatus === 'online' ? '已上架' : '已下架',
+      icon: 'success'
+    })
+  }
+
+  const handleDelete = (skill: PublishedSkill, e) => {
+    e.stopPropagation()
+    console.log('[SkillManage] Delete skill:', skill.id)
+    Taro.showModal({
+      title: '确认删除',
+      content: '确定要删除这个技能吗？删除后无法恢复。',
+      confirmColor: '#F53F3F',
+      success: (res) => {
+        if (res.confirm) {
+          setMySkills(prev => prev.filter(s => s.id !== skill.id))
+          Taro.showToast({ title: '已删除', icon: 'success' })
+        }
+      }
+    })
+  }
+
+  return (
+    <ScrollView scrollY className={styles.page}>
+      <View className={styles.skillList}>
+        {mySkills.length > 0 ? (
+          mySkills.map(skill => (
+            <View key={skill.id} className={styles.skillCard}>
+              <View className={styles.skillHeader}>
+                <Image
+                  className={styles.skillImage}
+                  src={skill.images[0]}
+                  mode='aspectFill'
+                  onError={(e) => console.error('[SkillManage] Image error:', e)}
+                />
+                <View className={styles.skillInfo}>
+                  <View style={{ display: 'flex', alignItems: 'center' }}>
+                    <Text className={styles.skillTitle}>{skill.title}</Text>
+                    <Text className={classnames(
+                      styles.statusTag,
+                      skill.status === 'online' ? styles.online : styles.offline
+                    )}>
+                      {skill.status === 'online' ? '已上架' : '已下架'}
+                    </Text>
+                  </View>
+                  <Text className={styles.skillCategory}>{skill.categoryName}</Text>
+                  <Text className={styles.skillPrice}>
+                    ¥{skill.priceMin}-{skill.priceMax}/{skill.priceUnit}
+                  </Text>
+                  <View className={styles.skillMeta}>
+                    <Text>⭐ {skill.rating}</Text>
+                    <Text>💬 {skill.reviewCount}条评价</Text>
+                    <Text>📦 {skill.provider.completedOrders}单</Text>
+                  </View>
+                </View>
+              </View>
+              <View className={styles.skillActions}>
+                <Button
+                  className={styles.actionBtn}
+                  onClick={() => handleEdit(skill)}
+                >
+                  编辑
+                </Button>
+                <Button
+                  className={classnames(styles.actionBtn, styles.primary)}
+                  onClick={() => handleToggleStatus(skill)}
+                >
+                  {skill.status === 'online' ? '下架' : '上架'}
+                </Button>
+                <Button
+                  className={classnames(styles.actionBtn, styles.danger)}
+                  onClick={(e) => handleDelete(skill, e)}
+                >
+                  删除
+                </Button>
+              </View>
+            </View>
+          ))
+        ) : (
+          <View className={styles.emptyState}>
+            <Text className={styles.emptyIcon}>📝</Text>
+            <Text className={styles.emptyTitle}>暂无发布的技能</Text>
+            <Text className={styles.emptyDesc}>分享你的技能，帮助邻里的同时还能赚取收入~</Text>
+            <Button className={styles.publishBtn} onClick={handlePublish}>
+              立即发布
+            </Button>
+          </View>
+        )}
+      </View>
+
+      {mySkills.length > 0 && (
+        <View className={styles.fab} onClick={handlePublish}>
+          +
+        </View>
+      )}
+    </ScrollView>
+  )
+}
+
+export default SkillManagePage

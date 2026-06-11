@@ -1,0 +1,142 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #FFF0E8 0%, $color-bg-page 30%);
+  padding: 0 $page-padding;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 120rpx);
+}
+
+.searchBar {
+  margin-top: $spacing-lg;
+  display: flex;
+  align-items: center;
+  background: $color-bg-card;
+  border-radius: $radius-button;
+  padding: 0 $spacing-lg;
+  height: 72rpx;
+  box-shadow: 0 2rpx 8rpx rgba(255, 122, 69, 0.1);
+}
+
+.searchIcon {
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+  margin-right: $spacing-sm;
+}
+
+.searchInput {
+  flex: 1;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+}
+
+.searchPlaceholder {
+  flex: 1;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.bannerSection {
+  margin-top: $spacing-lg;
+}
+
+.bannerSwiper {
+  height: 200rpx;
+  border-radius: $radius-lg;
+  overflow: hidden;
+}
+
+.bannerItem {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.bannerImage {
+  width: 100%;
+  height: 100%;
+}
+
+.bannerOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: $spacing-md $spacing-lg;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.5));
+}
+
+.bannerTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-white;
+}
+
+.categorySection {
+  margin-top: $spacing-lg;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.categoryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: $spacing-lg $spacing-md;
+}
+
+.categoryItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-xs;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.categoryIcon {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: $radius-round;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+}
+
+.categoryName {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: $spacing-xl;
+  margin-bottom: $spacing-md;
+}
+
+.sectionTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.sectionMore {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.skillList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}

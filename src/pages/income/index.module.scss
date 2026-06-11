@@ -1,0 +1,176 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 40rpx);
+}
+
+.header {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  padding: $spacing-xl $page-padding;
+  padding-top: calc(env(safe-area-inset-top) + $spacing-xl);
+  color: $color-text-white;
+}
+
+.balanceCard {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+}
+
+.balanceLabel {
+  font-size: $font-size-sm;
+  opacity: 0.85;
+  margin-bottom: $spacing-xs;
+}
+
+.balanceValue {
+  font-size: 56rpx;
+  font-weight: $font-weight-bold;
+  margin-bottom: $spacing-md;
+}
+
+.balanceActions {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.actionBtn {
+  @include button-reset;
+  flex: 1;
+  height: 64rpx;
+  border-radius: $radius-button;
+  background: rgba(255, 255, 255, 0.25);
+  color: $color-text-white;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  transition: all $transition-base;
+
+  &:active {
+    background: rgba(255, 255, 255, 0.35);
+  }
+}
+
+.statsRow {
+  display: flex;
+  justify-content: space-around;
+}
+
+.statItem {
+  text-align: center;
+}
+
+.statValue {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  margin-bottom: 4rpx;
+}
+
+.statLabel {
+  font-size: $font-size-xs;
+  opacity: 0.8;
+}
+
+.tabBar {
+  display: flex;
+  background: $color-bg-card;
+  padding: 0 $page-padding;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.tabItem {
+  flex: 1;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  position: relative;
+  transition: all $transition-base;
+
+  &.active {
+    color: $color-primary;
+    font-weight: $font-weight-semibold;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 48rpx;
+      height: 6rpx;
+      background: $color-primary;
+      border-radius: 3rpx;
+    }
+  }
+}
+
+.recordList {
+  padding: $spacing-md $page-padding;
+}
+
+.recordCard {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-sm;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: $shadow-card;
+}
+
+.recordInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.recordTitle {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  margin-bottom: $spacing-xs;
+  @include text-ellipsis;
+}
+
+.recordDate {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.recordAmount {
+  text-align: right;
+  flex-shrink: 0;
+  margin-left: $spacing-md;
+}
+
+.amountValue {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+
+  &.income {
+    color: $color-success;
+  }
+
+  &.withdraw {
+    color: $color-error;
+  }
+}
+
+.amountStatus {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+
+  &.pending {
+    color: $color-warning;
+  }
+
+  &.failed {
+    color: $color-error;
+  }
+}

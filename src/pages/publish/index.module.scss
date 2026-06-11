@@ -1,0 +1,268 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding: $spacing-md $page-padding;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 140rpx);
+}
+
+.formCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.formLabel {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+
+  &.required::before {
+    content: '*';
+    color: $color-error;
+  }
+}
+
+.categoryScroll {
+  @include scroll-x-container;
+  margin: 0 -$spacing-lg;
+  padding: 0 $spacing-lg;
+}
+
+.categoryItem {
+  @include scroll-x-item(auto);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: $spacing-lg;
+  gap: $spacing-xs;
+
+  &:last-child {
+    margin-right: 0;
+  }
+}
+
+.categoryCircle {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: $radius-round;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44rpx;
+  background: $color-bg-page;
+  transition: all $transition-base;
+  border: 4rpx solid transparent;
+}
+
+.categoryActive {
+  .categoryCircle {
+    border-color: $color-primary;
+    background: rgba(255, 122, 69, 0.1);
+  }
+
+  .categoryName {
+    color: $color-primary;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.categoryName {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.inputField {
+  width: 100%;
+  height: 80rpx;
+  border-radius: $radius-md;
+  background: $color-bg-page;
+  padding: 0 $spacing-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  box-sizing: border-box;
+}
+
+.textareaField {
+  width: 100%;
+  min-height: 200rpx;
+  border-radius: $radius-md;
+  background: $color-bg-page;
+  padding: $spacing-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  box-sizing: border-box;
+  line-height: 1.6;
+}
+
+.priceRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.priceInput {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  padding: 0 $spacing-md;
+  height: 80rpx;
+
+  text {
+    font-size: $font-size-md;
+    color: $color-text-tertiary;
+    margin-right: $spacing-xs;
+  }
+
+  input {
+    flex: 1;
+    font-size: $font-size-md;
+    color: $color-text-primary;
+  }
+}
+
+.priceSeparator {
+  font-size: $font-size-lg;
+  color: $color-text-tertiary;
+}
+
+.unitSelect {
+  height: 80rpx;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  padding: 0 $spacing-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  min-width: 140rpx;
+}
+
+.tagsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.tagItem {
+  padding: $spacing-sm $spacing-md;
+  border-radius: $radius-button;
+  background: $color-bg-page;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  border: 2rpx solid transparent;
+  transition: all $transition-base;
+
+  &.active {
+    background: rgba(255, 122, 69, 0.1);
+    color: $color-primary;
+    border-color: $color-primary;
+  }
+}
+
+.customTagInput {
+  flex: 1;
+  min-width: 200rpx;
+  height: 64rpx;
+  background: $color-bg-page;
+  border-radius: $radius-button;
+  padding: 0 $spacing-md;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+}
+
+.uploadGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: $spacing-sm;
+}
+
+.uploadItem {
+  aspect-ratio: 1;
+  border-radius: $radius-md;
+  overflow: hidden;
+  position: relative;
+  background: $color-bg-page;
+}
+
+.uploadImage {
+  width: 100%;
+  height: 100%;
+}
+
+.uploadBtn {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  border: 2rpx dashed $color-border;
+  border-radius: $radius-md;
+  background: $color-bg-page;
+}
+
+.uploadIcon {
+  font-size: 48rpx;
+  color: $color-text-tertiary;
+}
+
+.uploadText {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.deleteBtn {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  width: 40rpx;
+  height: 40rpx;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border-radius: $radius-round;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+}
+
+.submitBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: $spacing-md $page-padding;
+  padding-bottom: calc(env(safe-area-inset-bottom) + $spacing-md);
+  background: $color-bg-card;
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.submitBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  color: $color-text-white;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+
+  &.disabled {
+    background: $color-text-disabled;
+  }
+}

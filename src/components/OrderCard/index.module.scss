@@ -1,0 +1,164 @@
+@use '@/styles/variables.scss' as *;
+
+.orderCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  box-shadow: $shadow-card;
+  margin-bottom: $spacing-md;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+  padding-bottom: $spacing-md;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.skillInfo {
+  display: flex;
+  gap: $spacing-sm;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.skillImage {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-sm;
+  flex-shrink: 0;
+}
+
+.skillTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  @include text-ellipsis;
+}
+
+.statusText {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  flex-shrink: 0;
+
+  &.pending {
+    color: $color-warning;
+  }
+
+  &.confirmed {
+    color: $color-info;
+  }
+
+  &.inProgress {
+    color: $color-primary;
+  }
+
+  &.toReview {
+    color: $color-error;
+  }
+
+  &.completed {
+    color: $color-success;
+  }
+
+  &.cancelled {
+    color: $color-text-tertiary;
+  }
+}
+
+.cardContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.providerInfo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex: 1;
+  min-width: 0;
+}
+
+.providerAvatar {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: $radius-round;
+  flex-shrink: 0;
+}
+
+.providerName {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  @include text-ellipsis;
+}
+
+.price {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-price;
+  flex-shrink: 0;
+}
+
+.orderInfo {
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.infoRow {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: $spacing-sm;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.infoLabel {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  width: 120rpx;
+  flex-shrink: 0;
+}
+
+.infoValue {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  flex: 1;
+}
+
+.cardActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-sm;
+}
+
+.actionBtn {
+  @include button-reset;
+  height: $button-height-sm;
+  padding: 0 $spacing-lg;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  background: $color-bg-page;
+  color: $color-text-primary;
+  border: 1rpx solid $color-border;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+
+  &.primary {
+    background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+    color: $color-text-white;
+    border: none;
+  }
+}

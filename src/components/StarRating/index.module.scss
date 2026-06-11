@@ -1,0 +1,23 @@
+@use '@/styles/variables.scss' as *;
+
+.starRating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.star {
+  font-size: 28rpx;
+  color: $color-text-disabled;
+
+  &.active {
+    color: $color-warning;
+  }
+
+  &.half {
+    background: linear-gradient(90deg, $color-warning 50%, $color-text-disabled 50%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}

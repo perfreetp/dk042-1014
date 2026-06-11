@@ -1,0 +1,126 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding: $spacing-md $page-padding;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 40rpx);
+}
+
+.noticeList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.noticeCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+}
+
+.noticeHeader {
+  padding: $spacing-md $spacing-lg;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.noticeTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-white;
+  flex: 1;
+  @include text-ellipsis;
+}
+
+.noticeTag {
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+  background: rgba(255, 255, 255, 0.25);
+  color: $color-text-white;
+  font-size: $font-size-xs;
+  margin-left: $spacing-sm;
+  flex-shrink: 0;
+
+  &.important {
+    background: rgba(245, 63, 63, 0.9);
+  }
+
+  &.new {
+    background: rgba(255, 87, 34, 0.9);
+  }
+
+  &.activity {
+    background: rgba(54, 179, 126, 0.9);
+  }
+}
+
+.noticeBody {
+  padding: $spacing-lg;
+}
+
+.noticeDate {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-bottom: $spacing-sm;
+}
+
+.noticeContent {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.noticeImages {
+  display: flex;
+  gap: $spacing-sm;
+  margin-top: $spacing-md;
+  flex-wrap: wrap;
+}
+
+.noticeImage {
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: $radius-md;
+}
+
+.noticeFooter {
+  padding: 0 $spacing-lg $spacing-lg;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.noticeExpand {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.emptyState {
+  padding: 120rpx 0;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 120rpx;
+  margin-bottom: $spacing-lg;
+}
+
+.emptyTitle {
+  font-size: $font-size-lg;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-xs;
+}
+
+.emptyDesc {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
