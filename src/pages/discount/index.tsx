@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { View, Text, ScrollView, Button } from '@tarojs/components'
+import { View, Text, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import classnames from 'classnames'
 import styles from './index.module.scss'
@@ -22,6 +22,8 @@ const DiscountPage: React.FC = () => {
   }, [activeTab, coupons])
 
   const availableCount = coupons.filter(c => c.status === 'available').length
+  const cashCount = coupons.filter(c => c.status === 'available' && c.type === 'cash').length
+  const discountCount = coupons.filter(c => c.status === 'available' && c.type === 'discount').length
 
   const handleUseCoupon = (coupon: Coupon) => {
     useCoupon(coupon.id)
@@ -37,18 +39,40 @@ const DiscountPage: React.FC = () => {
     }
   }
 
-  const formatValue = (coupon: Coupon) => {
-    if (coupon.value >= 1) return coupon.value
-    return (coupon.value * 10).toFixed(1)
+  const formatDisplayValue = (coupon: Coupon) => {
+    if (coupon.type === 'cash') {
+      return coupon.value
+    }
+    return coupon.value.toFixed(1)
   }
+
+  const getUnitText = (coupon: Coupon) => {
+    return coupon.type === 'cash' ? '¥' : '折'
+  }
+
+  const isDiscountType = (coupon: Coupon) => coupon.type === 'discount'
 
   return (
     <ScrollView scrollY className={styles.page}>
       <View className={styles.header}>
         <Text className={styles.title}>邻里优惠</Text>
         <Text className={styles.subtitle}>专属优惠，邻里共享</Text>
-        <Text className={styles.couponCount}>{availableCount}</Text>
-        <Text className={styles.couponCountLabel}>张可用优惠券</Text>
+        <View className={styles.couponStats}>
+          <View className={styles.statItem}>
+            <Text className={styles.statValue}>{availableCount}</Text>
+            <Text className={styles.statLabel}>张可用</Text>
+          </View>
+          <View className={styles.statDivider} />
+          <View className={styles.statItem}>
+            <Text className={styles.statValue}>{cashCount}</Text>
+            <Text className={styles.statLabel}>张现金券</Text>
+          </View>
+          <View className={styles.statDivider} />
+          <View className={styles.statItem}>
+            <Text className={styles.statValue}>{discountCount}</Text>
+            <Text className={styles.statLabel}>张折扣券</Text>
+          </View>
+        </View>
       </View>
 
       <View className={styles.tabBar}>
@@ -59,6 +83,9 @@ const DiscountPage: React.FC = () => {
             onClick={() => setActiveTab(tab.key)}
           >
             <Text>{tab.label}</Text>
+            {tab.key === 'available' && availableCount > 0 && (
+              <Text className={styles.tabBadge}>{availableCount}</Text>
+            )}
           </View>
         ))}
       </View>
@@ -70,6 +97,7 @@ const DiscountPage: React.FC = () => {
               key={coupon.id}
               className={classnames(
                 styles.couponCard,
+                isDiscountType(coupon) && styles.couponDiscount,
                 coupon.status === 'expired' && styles.expired,
                 coupon.status === 'used' && styles.used
               )}
@@ -80,12 +108,27 @@ const DiscountPage: React.FC = () => {
                   {coupon.status === 'used' ? '已使用' : '已过期'}
                 </View>
               )}
-              <View className={styles.couponLeft}>
-                <View>
-                  <Text className={styles.couponAmountUnit}>¥</Text>
-                  <Text className={styles.couponAmount}>{formatValue(coupon)}</Text>
+              <View className={classnames(
+                styles.couponLeft,
+                isDiscountType(coupon) && styles.couponLeftDiscount
+              )}>
+                <View className={styles.couponValueRow}>
+                  {isDiscountType(coupon) ? (
+                    <>
+                      <Text className={styles.couponAmount}>{formatDisplayValue(coupon)}</Text>
+                      <Text className={styles.couponUnit}>{getUnitText(coupon)}</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Text className={styles.couponAmountUnit}>¥</Text>
+                      <Text className={styles.couponAmount}>{formatDisplayValue(coupon)}</Text>
+                    </>
+                  )}
                 </View>
                 <Text className={styles.couponCondition}>满{coupon.minAmount}可用</Text>
+                <Text className={styles.couponTypeTag}>
+                  {isDiscountType(coupon) ? '折扣券' : '现金券'}
+                </Text>
               </View>
               <View className={styles.couponRight}>
                 <View>
@@ -94,22 +137,22 @@ const DiscountPage: React.FC = () => {
                   <Text className={styles.couponValidity}>有效期至 {coupon.expireDate}</Text>
                 </View>
                 {coupon.status === 'available' ? (
-                  <Button
-                    className={styles.couponAction}
+                  <View
+                    className={classnames(
+                      styles.couponAction,
+                      isDiscountType(coupon) && styles.couponActionDiscount
+                    )}
                     onClick={(e) => {
                       e.stopPropagation()
                       handleUseCoupon(coupon)
                     }}
                   >
-                    立即使用
-                  </Button>
+                    <Text>立即使用</Text>
+                  </View>
                 ) : (
-                  <Button
-                    className={classnames(styles.couponAction, styles.disabled)}
-                    disabled
-                  >
-                    {coupon.status === 'used' ? '已使用' : '已过期'}
-                  </Button>
+                  <View className={classnames(styles.couponAction, styles.disabled)}>
+                    <Text>{coupon.status === 'used' ? '已使用' : '已过期'}</Text>
+                  </View>
                 )}
               </View>
             </View>

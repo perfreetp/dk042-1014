@@ -7,19 +7,28 @@ import { useAppStore } from '@/store'
 import { Order, OrderStatus } from '@/types'
 import StarRating from '@/components/StarRating'
 
-const statusMap: Record<OrderStatus, { text: string; desc: string }> = {
-  pending: { text: '待确认', desc: '等待服务者确认订单' },
-  confirmed: { text: '已确认', desc: '服务者已确认订单，请按时赴约' },
-  inProgress: { text: '进行中', desc: '服务正在进行中' },
-  toReview: { text: '待评价', desc: '服务已完成，请给服务者评价' },
-  completed: { text: '已完成', desc: '订单已完成' },
-  cancelled: { text: '已取消', desc: '订单已取消' }
+const statusMap: Record<OrderStatus, { text: string; desc: string; step: number }> = {
+  pending: { text: '待确认', desc: '等待服务者确认订单', step: 0 },
+  confirmed: { text: '已确认', desc: '服务者已确认订单，请按时赴约', step: 1 },
+  inProgress: { text: '进行中', desc: '服务正在进行中', step: 2 },
+  toReview: { text: '待评价', desc: '服务已完成，请给服务者评价', step: 3 },
+  completed: { text: '已完成', desc: '订单已完成', step: 4 },
+  cancelled: { text: '已取消', desc: '订单已取消', step: -1 }
 }
+
+const steps = [
+  { key: 'pending', label: '待确认' },
+  { key: 'confirmed', label: '已确认' },
+  { key: 'inProgress', label: '进行中' },
+  { key: 'completed', label: '已完成' }
+]
 
 const OrderDetailPage: React.FC = () => {
   const router = useRouter()
   const storeOrders = useAppStore(state => state.orders)
+  const storeSkills = useAppStore(state => state.skills)
   const updateOrder = useAppStore(state => state.updateOrder)
+  const getOrCreateChatSession = useAppStore(state => state.getOrCreateChatSession)
   const [order, setOrder] = useState<Order | null>(null)
   const [showReview, setShowReview] = useState(false)
   const [rating, setRating] = useState(5)
@@ -40,6 +49,27 @@ const OrderDetailPage: React.FC = () => {
     }
   }, [router.params.id, router.params.action, storeOrders])
 
+  useEffect(() => {
+    if (order) {
+      const updated = storeOrders.find(o => o.id === order.id)
+      if (updated) {
+        setOrder(updated)
+      }
+    }
+  }, [storeOrders, order?.id])
+
+  const handleContact = () => {
+    if (!order) return
+    const session = getOrCreateChatSession(
+      order.skillId,
+      { id: order.providerId, name: order.providerName, avatar: order.providerAvatar, isVerified: true },
+      { id: order.skillId, title: order.skillTitle, image: order.skillImage }
+    )
+    Taro.navigateTo({
+      url: `/pages/chat/index?chatId=${session.id}`
+    })
+  }
+
   const handleAction = (action: string) => {
     if (!order) return
     switch (action) {
@@ -56,11 +86,27 @@ const OrderDetailPage: React.FC = () => {
         })
         break
       case 'contact':
-        Taro.showToast({ title: '沟通功能开发中', icon: 'none' })
+        handleContact()
+        break
+      case 'confirm':
+        updateOrder(order.id, { status: 'confirmed' })
+        Taro.showToast({ title: '订单已确认', icon: 'success' })
+        break
+      case 'start':
+        updateOrder(order.id, { status: 'inProgress' })
+        Taro.showToast({ title: '服务已开始', icon: 'success' })
         break
       case 'complete':
-        updateOrder(order.id, { status: 'toReview' })
-        Taro.showToast({ title: '服务已完成，请评价', icon: 'success' })
+        Taro.showModal({
+          title: '确认完成',
+          content: '请确认服务已完成且满意，确认后订单将进入待评价状态',
+          success: (res) => {
+            if (res.confirm) {
+              updateOrder(order.id, { status: 'toReview' })
+              Taro.showToast({ title: '服务已完成，请评价', icon: 'success' })
+            }
+          }
+        })
         break
       case 'review':
         setShowReview(true)
@@ -107,7 +153,7 @@ const OrderDetailPage: React.FC = () => {
         break
       case 'confirmed':
         actions.push({ key: 'contact', label: '联系对方' })
-        actions.push({ key: 'complete', label: '完成服务', primary: true })
+        actions.push({ key: 'start', label: '开始服务', primary: true })
         break
       case 'inProgress':
         actions.push({ key: 'contact', label: '联系对方' })
@@ -117,6 +163,7 @@ const OrderDetailPage: React.FC = () => {
         actions.push({ key: 'review', label: '去评价', primary: true })
         break
       case 'completed':
+        actions.push({ key: 'contact', label: '再次联系' })
         actions.push({ key: 'reorder', label: '再来一单', primary: true })
         break
       default:
@@ -155,6 +202,45 @@ const OrderDetailPage: React.FC = () => {
     )
   }
 
+  const renderStatusSteps = () => {
+    if (!order) return null
+    const currentStep = statusMap[order.status].step
+    if (currentStep < 0) return null
+
+    return (
+      <View className={styles.statusSteps}>
+        {steps.map((step, index) => {
+          const isActive = index <= currentStep
+          const isCurrent = index === currentStep
+          const lineActive = index < currentStep
+          return (
+            <View
+              key={step.key}
+              className={classnames(
+                styles.stepItem,
+                lineActive && styles.stepLineActive
+              )}
+            >
+              <View className={classnames(
+                styles.stepDot,
+                isActive && styles.stepDotActive,
+                isCurrent && styles.stepDotCurrent
+              )}>
+                {isActive && <Text className={styles.stepCheck}>✓</Text>}
+              </View>
+              <Text className={classnames(
+                styles.stepLabel,
+                isActive && styles.stepLabelActive
+              )}>
+                {step.label}
+              </Text>
+            </View>
+          )
+        })}
+      </View>
+    )
+  }
+
   if (!order) {
     return (
       <View className={styles.page}>
@@ -171,6 +257,7 @@ const OrderDetailPage: React.FC = () => {
         <View className={styles.statusBar}>
           <Text className={styles.statusText}>{statusMap[order.status].text}</Text>
           <Text className={styles.statusDesc}>{statusMap[order.status].desc}</Text>
+          {renderStatusSteps()}
         </View>
 
         <View className={styles.content}>
@@ -223,7 +310,13 @@ const OrderDetailPage: React.FC = () => {
                     src={order.providerAvatar}
                     mode='aspectFill'
                   />
-                  <Text className={styles.providerName}>{order.providerName}</Text>
+                  <View className={styles.providerInfo}>
+                    <Text className={styles.providerName}>{order.providerName}</Text>
+                    <Text className={styles.providerDesc}>点击头像可联系对方</Text>
+                  </View>
+                  <View className={styles.contactBtn} onClick={handleContact}>
+                    <Text className={styles.contactText}>联系</Text>
+                  </View>
                 </View>
               </View>
 
@@ -266,6 +359,12 @@ const OrderDetailPage: React.FC = () => {
                   <Text className={styles.infoLabel}>创建时间</Text>
                   <Text className={styles.infoValue}>{order.createdAt}</Text>
                 </View>
+                {order.updatedAt !== order.createdAt && (
+                  <View className={styles.infoRow}>
+                    <Text className={styles.infoLabel}>更新时间</Text>
+                    <Text className={styles.infoValue}>{order.updatedAt}</Text>
+                  </View>
+                )}
               </View>
             </>
           )}

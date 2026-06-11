@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { View, Text, Image, ScrollView, Switch } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import classnames from 'classnames'
 import styles from './index.module.scss'
+import { useAppStore } from '@/store'
 import { currentUser } from '@/data/user'
 
 const menuItems = [
@@ -21,20 +22,46 @@ const serviceItems = [
 
 const MinePage: React.FC = () => {
   const [isAccepting, setIsAccepting] = useState(currentUser.isAcceptingOrders)
+  const storeSkills = useAppStore(state => state.skills)
+  const storeOrders = useAppStore(state => state.orders)
+
+  const publishedCount = useMemo(() => {
+    return storeSkills.filter(s => s.provider.id === currentUser.id).length
+  }, [storeSkills])
+
+  const completedCount = useMemo(() => {
+    return storeOrders.filter(o => o.status === 'completed' && (o.providerId === currentUser.id || o.customerId === currentUser.id)).length
+  }, [storeOrders])
+
+  const favoriteCount = useMemo(() => {
+    return storeSkills.filter(s => s.isFavorite).length
+  }, [storeSkills])
 
   const handleNavigate = (path: string) => {
-    console.log('[Mine] Navigate to:', path)
     Taro.navigateTo({ url: path })
   }
 
   const handleSwitchChange = (e) => {
     const newValue = e.detail.value
-    console.log('[Mine] Accepting orders changed:', newValue)
     setIsAccepting(newValue)
     Taro.showToast({
       title: newValue ? '已开启接单' : '已关闭接单',
       icon: 'success'
     })
+  }
+
+  const handleStatClick = (statType: string) => {
+    switch (statType) {
+      case 'skills':
+        Taro.navigateTo({ url: '/pages/skill-manage/index' })
+        break
+      case 'orders':
+        Taro.switchTab({ url: '/pages/orders/index' })
+        break
+      case 'favorites':
+        Taro.navigateTo({ url: '/pages/favorites/index' })
+        break
+    }
   }
 
   return (
@@ -45,7 +72,6 @@ const MinePage: React.FC = () => {
             className={styles.avatar}
             src={currentUser.avatar}
             mode='aspectFill'
-            onError={(e) => console.error('[Mine] Avatar error:', e)}
           />
           <View className={styles.userInfo}>
             <View className={styles.userNameRow}>
@@ -56,8 +82,7 @@ const MinePage: React.FC = () => {
                 <Text className={styles.unverifiedBadge}>未认证</Text>
               )}
             </View>
-            <Text className={styles.userLocation}>
-              📍 {currentUser.neighborhood}</Text>
+            <Text className={styles.userLocation}>📍 {currentUser.neighborhood}</Text>
             <Text className={styles.userPhone}>{currentUser.phone}</Text>
           </View>
         </View>
@@ -65,16 +90,16 @@ const MinePage: React.FC = () => {
 
       <View className={styles.statsSection}>
         <View className={styles.statsGrid}>
-          <View className={styles.statItem}>
-            <Text className={styles.statValue}>{currentUser.publishedSkills}</Text>
+          <View className={styles.statItem} onClick={() => handleStatClick('skills')}>
+            <Text className={styles.statValue}>{publishedCount}</Text>
             <Text className={styles.statLabel}>发布技能</Text>
           </View>
-          <View className={styles.statItem}>
-            <Text className={styles.statValue}>{currentUser.completedOrders}</Text>
+          <View className={styles.statItem} onClick={() => handleStatClick('orders')}>
+            <Text className={styles.statValue}>{completedCount}</Text>
             <Text className={styles.statLabel}>完成订单</Text>
           </View>
-          <View className={styles.statItem}>
-            <Text className={styles.statValue}>{currentUser.favoriteCount}</Text>
+          <View className={styles.statItem} onClick={() => handleStatClick('favorites')}>
+            <Text className={styles.statValue}>{favoriteCount}</Text>
             <Text className={styles.statLabel}>收藏数</Text>
           </View>
           <View className={styles.statItem}>

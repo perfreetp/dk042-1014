@@ -24,6 +24,9 @@ const tabs: TabItem[] = [
 const OrdersPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<OrderStatus | 'all'>('all')
   const orders = useAppStore(state => state.orders)
+  const storeSkills = useAppStore(state => state.skills)
+  const getOrCreateChatSession = useAppStore(state => state.getOrCreateChatSession)
+  const updateOrder = useAppStore(state => state.updateOrder)
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   const filteredOrders = useMemo(() => {
@@ -35,6 +38,18 @@ const OrdersPage: React.FC = () => {
     setActiveTab(key)
   }
 
+  const handleContact = (order: Order) => {
+    const skill = storeSkills.find(s => s.id === order.skillId)
+    const session = getOrCreateChatSession(
+      order.skillId,
+      { id: order.providerId, name: order.providerName, avatar: order.providerAvatar, isVerified: true },
+      { id: order.skillId, title: order.skillTitle, image: order.skillImage }
+    )
+    Taro.navigateTo({
+      url: `/pages/chat/index?chatId=${session.id}`
+    })
+  }
+
   const handleAction = (action: string, order: Order) => {
     switch (action) {
       case 'cancel':
@@ -43,13 +58,14 @@ const OrdersPage: React.FC = () => {
           content: '确定要取消这个订单吗？',
           success: (res) => {
             if (res.confirm) {
+              updateOrder(order.id, { status: 'cancelled' })
               Taro.showToast({ title: '订单已取消', icon: 'success' })
             }
           }
         })
         break
       case 'contact':
-        Taro.showToast({ title: '沟通功能开发中', icon: 'none' })
+        handleContact(order)
         break
       case 'review':
         Taro.navigateTo({
@@ -59,6 +75,18 @@ const OrdersPage: React.FC = () => {
       case 'reorder':
         Taro.navigateTo({
           url: `/pages/skill-detail/index?id=${order.skillId}`
+        })
+        break
+      case 'complete':
+        Taro.showModal({
+          title: '确认完成',
+          content: '请确认服务已完成且满意，确认后订单将进入待评价状态',
+          success: (res) => {
+            if (res.confirm) {
+              updateOrder(order.id, { status: 'toReview' })
+              Taro.showToast({ title: '服务已完成', icon: 'success' })
+            }
+          }
         })
         break
       default:
@@ -91,6 +119,11 @@ const OrdersPage: React.FC = () => {
               onClick={() => handleTabClick(tab.key)}
             >
               <Text className={styles.tabText}>{tab.label}</Text>
+              {activeTab !== 'all' && orders.filter(o => o.status === tab.key).length > 0 && (
+                <Text className={styles.tabBadge}>
+                  {orders.filter(o => o.status === tab.key).length}
+                </Text>
+              )}
             </View>
           ))}
         </ScrollView>

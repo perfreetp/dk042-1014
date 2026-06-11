@@ -55,10 +55,11 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onAction }) => {
         actions.push({ key: 'review', label: '去评价', primary: true })
         break
       case 'completed':
+        actions.push({ key: 'contact', label: '联系对方' })
         actions.push({ key: 'reorder', label: '再来一单', primary: true })
         break
       default:
-        actions.push({ key: 'delete', label: '删除订单' })
+        actions.push({ key: 'reorder', label: '再来一单', primary: true })
     }
 
     return actions.map(action => (

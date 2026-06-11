@@ -119,12 +119,39 @@ export interface Coupon {
   id: string
   name: string
   description: string
+  type: 'cash' | 'discount'
   value: number
   minAmount: number
   expireDate: string
   status: 'available' | 'used' | 'expired'
   isUsed: boolean
   images?: string[]
+}
+
+export interface ChatMessage {
+  id: string
+  chatId: string
+  senderId: string
+  senderName: string
+  senderAvatar: string
+  type: 'text' | 'image'
+  content: string
+  createdAt: string
+}
+
+export interface ChatSession {
+  id: string
+  skillId: string
+  skillTitle: string
+  skillImage: string
+  otherUserId: string
+  otherUserName: string
+  otherUserAvatar: string
+  otherUserVerified: boolean
+  lastMessage?: string
+  lastMessageTime?: string
+  unreadCount: number
+  createdAt: string
 }
 
 export interface FeedbackRecord {

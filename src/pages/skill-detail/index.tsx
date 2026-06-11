@@ -9,6 +9,8 @@ import { Skill, Review } from '@/types'
 const SkillDetailPage: React.FC = () => {
   const router = useRouter()
   const storeSkills = useAppStore(state => state.skills)
+  const toggleFavorite = useAppStore(state => state.toggleFavorite)
+  const getOrCreateChatSession = useAppStore(state => state.getOrCreateChatSession)
   const [skill, setSkill] = useState<Skill | null>(null)
   const [isFavorite, setIsFavorite] = useState(false)
 
@@ -26,6 +28,8 @@ const SkillDetailPage: React.FC = () => {
   }, [router.params.id, storeSkills])
 
   const handleFavorite = () => {
+    if (!skill) return
+    toggleFavorite(skill.id)
     setIsFavorite(!isFavorite)
     Taro.showToast({
       title: isFavorite ? '已取消收藏' : '已收藏',
@@ -41,7 +45,24 @@ const SkillDetailPage: React.FC = () => {
   }
 
   const handleContact = () => {
-    Taro.showToast({ title: '沟通功能开发中', icon: 'none' })
+    if (!skill) return
+    const session = getOrCreateChatSession(
+      skill.id,
+      {
+        id: skill.provider.id,
+        name: skill.provider.name,
+        avatar: skill.provider.avatar,
+        isVerified: skill.provider.isVerified
+      },
+      {
+        id: skill.id,
+        title: skill.title,
+        image: skill.images[0]
+      }
+    )
+    Taro.navigateTo({
+      url: `/pages/chat/index?chatId=${session.id}`
+    })
   }
 
   if (!skill) {

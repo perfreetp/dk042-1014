@@ -14,7 +14,8 @@ export default defineAppConfig({
     'pages/verification/index',
     'pages/discount/index',
     'pages/feedback/index',
-    'pages/notice/index'
+    'pages/notice/index',
+    'pages/chat/index'
   ],
   window: {
     backgroundTextStyle: 'light',

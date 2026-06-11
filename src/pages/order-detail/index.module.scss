@@ -108,6 +108,97 @@
   flex: 1;
 }
 
+.providerInfo {
+  flex: 1;
+}
+
+.providerDesc {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+.contactBtn {
+  padding: 12rpx 24rpx;
+  background: linear-gradient(135deg, #FFF3E8 0%, #FFE8D5 100%);
+  border-radius: 32rpx;
+  flex-shrink: 0;
+}
+
+.contactText {
+  font-size: 24rpx;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.statusSteps {
+  display: flex;
+  justify-content: space-between;
+  margin-top: $spacing-md;
+  padding: 0 8rpx;
+}
+
+.stepItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex: 1;
+
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 20rpx;
+    left: 60%;
+    width: 80%;
+    height: 4rpx;
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  &.stepLineActive:not(:last-child)::after {
+    background: rgba(255, 255, 255, 0.9);
+  }
+}
+
+.stepDot {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12rpx;
+  z-index: 1;
+  transition: all 0.3s ease;
+
+  &.stepDotActive {
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  &.stepDotCurrent {
+    background: #fff;
+    transform: scale(1.2);
+    box-shadow: 0 0 16rpx rgba(255, 255, 255, 0.6);
+  }
+}
+
+.stepCheck {
+  font-size: 22rpx;
+  color: $color-primary;
+  font-weight: $font-weight-bold;
+}
+
+.stepLabel {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+
+  &.stepLabelActive {
+    color: #fff;
+    font-weight: $font-weight-medium;
+  }
+}
+
 .infoRow {
   display: flex;
   align-items: flex-start;

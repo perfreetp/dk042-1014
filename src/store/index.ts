@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { Skill, Order, Coupon, Notice } from '@/types'
+import { Skill, Order, Coupon, Notice, ChatMessage, ChatSession } from '@/types'
 import { skills as initSkills } from '@/data/skills'
 import { orders as initOrders } from '@/data/orders'
 import { discounts as initDiscounts, notices as initNotices, currentUser } from '@/data/user'
@@ -9,11 +9,17 @@ interface AppState {
   orders: Order[]
   coupons: Coupon[]
   notices: Notice[]
+  chatSessions: ChatSession[]
+  chatMessages: Record<string, ChatMessage[]>
 
   addSkill: (skill: Skill) => void
   addOrder: (order: Order) => void
   updateOrder: (id: string, updates: Partial<Order>) => void
   useCoupon: (id: string) => void
+  toggleFavorite: (skillId: string) => void
+  getOrCreateChatSession: (skillId: string, otherUser: { id: string; name: string; avatar: string; isVerified: boolean }, skill: { id: string; title: string; image: string }) => ChatSession
+  addMessage: (chatId: string, message: Omit<ChatMessage, 'id' | 'chatId' | 'createdAt'>) => void
+  getMessages: (chatId: string) => ChatMessage[]
 }
 
 const mySkill: Skill = {
@@ -45,26 +51,40 @@ const mySkill: Skill = {
   createdAt: '2024-01-20'
 }
 
+const parseDiscountValue = (discountStr: string): { type: 'cash' | 'discount'; value: number } => {
+  if (discountStr.includes('折')) {
+    const num = parseFloat(discountStr)
+    return { type: 'discount', value: isNaN(num) ? 8 : num }
+  }
+  const num = parseFloat(discountStr.replace(/[^0-9.]/g, ''))
+  return { type: 'cash', value: isNaN(num) ? 50 : num }
+}
+
 const initCoupons: Coupon[] = [
-  ...initDiscounts.map(d => ({
-    id: d.id,
-    name: d.title,
-    description: d.description,
-    value: parseFloat(d.discount) || 50,
-    minAmount: d.minAmount,
-    expireDate: d.expireDate,
-    status: (d.isUsed ? 'used' : 'available') as Coupon['status'],
-    isUsed: d.isUsed,
-    images: []
-  })),
+  ...initDiscounts.map(d => {
+    const { type, value } = parseDiscountValue(d.discount)
+    return {
+      id: d.id,
+      name: d.title,
+      description: d.description,
+      type,
+      value,
+      minAmount: d.minAmount,
+      expireDate: d.expireDate,
+      status: (d.isUsed ? 'used' : 'available') as Coupon['status'],
+      isUsed: d.isUsed,
+      images: []
+    }
+  }),
   {
     id: 'd5',
     name: '周末特惠券',
     description: '周末服务专享优惠',
+    type: 'cash' as const,
     value: 20,
     minAmount: 80,
     expireDate: '2023-12-31',
-    status: 'expired',
+    status: 'expired' as const,
     isUsed: false,
     images: []
   },
@@ -72,10 +92,11 @@ const initCoupons: Coupon[] = [
     id: 'd6',
     name: '国庆优惠券',
     description: '国庆假期限时优惠',
-    value: 100,
+    type: 'discount' as const,
+    value: 8.5,
     minAmount: 500,
     expireDate: '2023-10-07',
-    status: 'expired',
+    status: 'expired' as const,
     isUsed: false,
     images: []
   }
@@ -86,11 +107,13 @@ const initNoticeList: Notice[] = initNotices.map(n => ({
   images: [] as string[]
 }))
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>((set, get) => ({
   skills: [mySkill, ...initSkills],
   orders: [...initOrders],
   coupons: initCoupons,
   notices: initNoticeList,
+  chatSessions: [],
+  chatMessages: {},
 
   addSkill: (skill) => set((state) => ({
     skills: [skill, ...state.skills]
@@ -101,12 +124,67 @@ export const useAppStore = create<AppState>((set) => ({
   })),
 
   updateOrder: (id, updates) => set((state) => ({
-    orders: state.orders.map(o => o.id === id ? { ...o, ...updates } : o)
+    orders: state.orders.map(o => o.id === id ? { ...o, ...updates, updatedAt: new Date().toISOString() } : o)
   })),
 
   useCoupon: (id) => set((state) => ({
     coupons: state.coupons.map(c =>
       c.id === id ? { ...c, status: 'used' as const, isUsed: true } : c
     )
-  }))
+  })),
+
+  toggleFavorite: (skillId) => set((state) => ({
+    skills: state.skills.map(s =>
+      s.id === skillId ? { ...s, isFavorite: !s.isFavorite } : s
+    )
+  })),
+
+  getOrCreateChatSession: (skillId, otherUser, skill) => {
+    const existing = get().chatSessions.find(
+      s => s.skillId === skillId && s.otherUserId === otherUser.id
+    )
+    if (existing) return existing
+
+    const newSession: ChatSession = {
+      id: `chat_${Date.now()}_${skillId}`,
+      skillId,
+      skillTitle: skill.title,
+      skillImage: skill.image,
+      otherUserId: otherUser.id,
+      otherUserName: otherUser.name,
+      otherUserAvatar: otherUser.avatar,
+      otherUserVerified: otherUser.isVerified,
+      unreadCount: 0,
+      createdAt: new Date().toISOString()
+    }
+    set((state) => ({
+      chatSessions: [newSession, ...state.chatSessions],
+      chatMessages: { ...state.chatMessages, [newSession.id]: [] }
+    }))
+    return newSession
+  },
+
+  addMessage: (chatId, message) => {
+    const newMessage: ChatMessage = {
+      ...message,
+      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      chatId,
+      createdAt: new Date().toISOString()
+    }
+    set((state) => ({
+      chatMessages: {
+        ...state.chatMessages,
+        [chatId]: [...(state.chatMessages[chatId] || []), newMessage]
+      },
+      chatSessions: state.chatSessions.map(s =>
+        s.id === chatId
+          ? { ...s, lastMessage: message.content, lastMessageTime: newMessage.createdAt }
+          : s
+      )
+    }))
+  },
+
+  getMessages: (chatId) => {
+    return get().chatMessages[chatId] || []
+  }
 }))
