@@ -1,42 +1,55 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { View, Text, Image, ScrollView, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import classnames from 'classnames'
 import styles from './index.module.scss'
-import { skills } from '@/data/skills'
+import { useAppStore } from '@/store'
 import { Skill } from '@/types'
 
 interface PublishedSkill extends Skill {
-  status: 'online' | 'offline'
+  publishStatus: 'online' | 'offline'
 }
 
 const SkillManagePage: React.FC = () => {
-  const [mySkills, setMySkills] = useState<PublishedSkill[]>([])
+  const storeSkills = useAppStore(state => state.skills)
+  const [mySkills, setMySkills] = useState<PublishedSkill[]>(() => {
+    return storeSkills
+      .filter(s => s.provider.id === 'me')
+      .map(skill => ({
+        ...skill,
+        publishStatus: 'online' as const
+      }))
+  })
 
-  useEffect(() => {
-    const publishedSkills = skills.slice(0, 3).map(skill => ({
-      ...skill,
-      status: Math.random() > 0.3 ? 'online' : 'offline'
-    })) as PublishedSkill[]
-    console.log('[SkillManage] My skills count:', publishedSkills.length)
-    setMySkills(publishedSkills)
-  }, [])
+  const refreshMySkills = () => {
+    const updated = storeSkills
+      .filter(s => s.provider.id === 'me')
+      .map(skill => {
+        const existing = mySkills.find(m => m.id === skill.id)
+        return {
+          ...skill,
+          publishStatus: existing?.publishStatus || 'online' as const
+        }
+      })
+    setMySkills(updated)
+  }
+
+  React.useEffect(() => {
+    refreshMySkills()
+  }, [storeSkills])
 
   const handlePublish = () => {
-    console.log('[SkillManage] Navigate to publish')
     Taro.switchTab({ url: '/pages/publish/index' })
   }
 
   const handleEdit = (skill: PublishedSkill) => {
-    console.log('[SkillManage] Edit skill:', skill.id)
     Taro.showToast({ title: '编辑功能开发中', icon: 'none' })
   }
 
   const handleToggleStatus = (skill: PublishedSkill) => {
-    console.log('[SkillManage] Toggle status:', skill.id, 'current:', skill.status)
-    const newStatus = skill.status === 'online' ? 'offline' : 'online'
+    const newStatus = skill.publishStatus === 'online' ? 'offline' : 'online'
     setMySkills(prev => prev.map(s =>
-      s.id === skill.id ? { ...s, status: newStatus } : s
+      s.id === skill.id ? { ...s, publishStatus: newStatus } : s
     ))
     Taro.showToast({
       title: newStatus === 'online' ? '已上架' : '已下架',
@@ -46,7 +59,6 @@ const SkillManagePage: React.FC = () => {
 
   const handleDelete = (skill: PublishedSkill, e) => {
     e.stopPropagation()
-    console.log('[SkillManage] Delete skill:', skill.id)
     Taro.showModal({
       title: '确认删除',
       content: '确定要删除这个技能吗？删除后无法恢复。',
@@ -71,16 +83,15 @@ const SkillManagePage: React.FC = () => {
                   className={styles.skillImage}
                   src={skill.images[0]}
                   mode='aspectFill'
-                  onError={(e) => console.error('[SkillManage] Image error:', e)}
                 />
                 <View className={styles.skillInfo}>
                   <View style={{ display: 'flex', alignItems: 'center' }}>
                     <Text className={styles.skillTitle}>{skill.title}</Text>
                     <Text className={classnames(
                       styles.statusTag,
-                      skill.status === 'online' ? styles.online : styles.offline
+                      skill.publishStatus === 'online' ? styles.online : styles.offline
                     )}>
-                      {skill.status === 'online' ? '已上架' : '已下架'}
+                      {skill.publishStatus === 'online' ? '已上架' : '已下架'}
                     </Text>
                   </View>
                   <Text className={styles.skillCategory}>{skill.categoryName}</Text>
@@ -88,7 +99,7 @@ const SkillManagePage: React.FC = () => {
                     ¥{skill.priceMin}-{skill.priceMax}/{skill.priceUnit}
                   </Text>
                   <View className={styles.skillMeta}>
-                    <Text>⭐ {skill.rating}</Text>
+                    <Text>⭐ {skill.rating || '暂无'}</Text>
                     <Text>💬 {skill.reviewCount}条评价</Text>
                     <Text>📦 {skill.provider.completedOrders}单</Text>
                   </View>
@@ -105,7 +116,7 @@ const SkillManagePage: React.FC = () => {
                   className={classnames(styles.actionBtn, styles.primary)}
                   onClick={() => handleToggleStatus(skill)}
                 >
-                  {skill.status === 'online' ? '下架' : '上架'}
+                  {skill.publishStatus === 'online' ? '下架' : '上架'}
                 </Button>
                 <Button
                   className={classnames(styles.actionBtn, styles.danger)}

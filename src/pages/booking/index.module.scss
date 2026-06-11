@@ -3,8 +3,25 @@
 .page {
   min-height: 100vh;
   background: $color-bg-page;
+  position: relative;
+}
+
+.scrollContent {
+  height: 100vh;
   padding: $spacing-md $page-padding;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 140rpx);
+  padding-bottom: 180rpx;
+}
+
+.loadingWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.loadingText {
+  color: $color-text-tertiary;
+  font-size: $font-size-md;
 }
 
 .skillCard {
@@ -141,6 +158,14 @@
   line-height: 1.6;
 }
 
+.charCount {
+  display: block;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-top: $spacing-xs;
+  text-align: right;
+}
+
 .uploadGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -196,6 +221,13 @@
   align-items: center;
   justify-content: center;
   font-size: 24rpx;
+}
+
+.uploadHint {
+  display: block;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-top: $spacing-md;
 }
 
 .submitBar {

@@ -1,39 +1,17 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import styles from './index.module.scss'
 import SkillCard from '@/components/SkillCard'
-import { getFavoriteSkills } from '@/data/skills'
-import { Skill } from '@/types'
+import { useAppStore } from '@/store'
 
 const FavoritesPage: React.FC = () => {
-  const [favorites, setFavorites] = useState<Skill[]>([])
+  const skills = useAppStore(state => state.skills)
+  const favorites = skills.filter(s => s.isFavorite)
 
-  useEffect(() => {
-    const data = getFavoriteSkills()
-    console.log('[Favorites] Favorite skills count:', data.length)
-    setFavorites(data)
-  }, [])
-
-  const handleSkillClick = (skill: Skill) => {
-    console.log('[Favorites] Skill clicked:', skill.id)
+  const handleSkillClick = (skillId: string) => {
     Taro.navigateTo({
-      url: `/pages/skill-detail/index?id=${skill.id}`
-    })
-  }
-
-  const handleCancelFavorite = (skillId: string, e) => {
-    e.stopPropagation()
-    console.log('[Favorites] Cancel favorite:', skillId)
-    Taro.showModal({
-      title: '确认取消',
-      content: '确定要取消收藏这个技能吗？',
-      success: (res) => {
-        if (res.confirm) {
-          setFavorites(prev => prev.filter(s => s.id !== skillId))
-          Taro.showToast({ title: '已取消收藏', icon: 'success' })
-        }
-      }
+      url: `/pages/skill-detail/index?id=${skillId}`
     })
   }
 
@@ -43,7 +21,7 @@ const FavoritesPage: React.FC = () => {
         {favorites.length > 0 ? (
           <View className={styles.skillList}>
             {favorites.map(skill => (
-              <SkillCard key={skill.id} skill={skill} onClick={() => handleSkillClick(skill)} />
+              <SkillCard key={skill.id} skill={skill} onClick={() => handleSkillClick(skill.id)} />
             ))}
           </View>
         ) : (

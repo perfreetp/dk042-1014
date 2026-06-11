@@ -3,27 +3,25 @@ import { View, Text, Image, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import classnames from 'classnames'
 import styles from './index.module.scss'
-import { notices } from '@/data/user'
+import { useAppStore } from '@/store'
 import { Notice } from '@/types'
 
 const NoticePage: React.FC = () => {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+  const notices = useAppStore(state => state.notices)
 
   const getTagInfo = (type: string) => {
     switch (type) {
-      case 'important':
-        return { text: '重要', class: styles.important }
-      case 'new':
-        return { text: '新功能', class: styles.new }
+      case 'system':
+        return { text: '重要', className: styles.important }
       case 'activity':
-        return { text: '活动', class: styles.activity }
+        return { text: '活动', className: styles.activity }
       default:
-        return { text: '公告', class: '' }
+        return { text: '公告', className: '' }
     }
   }
 
   const toggleExpand = (id: string) => {
-    console.log('[Notice] Toggle expand:', id)
     setExpandedIds(prev => {
       const newSet = new Set(prev)
       if (newSet.has(id)) {
@@ -36,16 +34,10 @@ const NoticePage: React.FC = () => {
   }
 
   const handleImagePreview = (images: string[], current: string) => {
-    console.log('[Notice] Preview image:', current)
     Taro.previewImage({
       urls: images,
       current
     })
-  }
-
-  const handleNoticeClick = (notice: Notice) => {
-    console.log('[Notice] Notice clicked:', notice.id)
-    toggleExpand(notice.id)
   }
 
   const renderContent = (content: string, isExpanded: boolean) => {
@@ -63,27 +55,28 @@ const NoticePage: React.FC = () => {
             const tagInfo = getTagInfo(notice.type)
             const isExpanded = expandedIds.has(notice.id)
             const needsExpand = notice.content.length > 150
+            const hasImages = notice.images && notice.images.length > 0
 
             return (
               <View
                 key={notice.id}
                 className={styles.noticeCard}
-                onClick={() => handleNoticeClick(notice)}
+                onClick={() => toggleExpand(notice.id)}
               >
                 <View className={styles.noticeHeader}>
                   <Text className={styles.noticeTitle}>{notice.title}</Text>
-                  <Text className={classnames(styles.noticeTag, tagInfo.class)}>
+                  <Text className={classnames(styles.noticeTag, tagInfo.className)}>
                     {tagInfo.text}
                   </Text>
                 </View>
                 <View className={styles.noticeBody}>
-                  <Text className={styles.noticeDate}>📅 {notice.createdAt}</Text>
+                  <Text className={styles.noticeDate}>{notice.createdAt}</Text>
                   <Text className={styles.noticeContent}>
                     {renderContent(notice.content, isExpanded)}
                   </Text>
-                  {notice.images.length > 0 && (isExpanded || !needsExpand) && (
+                  {hasImages && (isExpanded || !needsExpand) && (
                     <View className={styles.noticeImages}>
-                      {notice.images.map((img, index) => (
+                      {notice.images!.map((img, index) => (
                         <Image
                           key={index}
                           className={styles.noticeImage}
@@ -91,9 +84,8 @@ const NoticePage: React.FC = () => {
                           mode='aspectFill'
                           onClick={(e) => {
                             e.stopPropagation()
-                            handleImagePreview(notice.images, img)
+                            handleImagePreview(notice.images!, img)
                           }}
-                          onError={(e) => console.error('[Notice] Image error:', e)}
                         />
                       ))}
                     </View>
@@ -102,8 +94,7 @@ const NoticePage: React.FC = () => {
                 {needsExpand && (
                   <View className={styles.noticeFooter}>
                     <Text className={styles.noticeExpand}>
-                      {isExpanded ? '收起' : '展开全文'}
-                      <Text>{isExpanded ? '↑' : '↓'}</Text>
+                      {isExpanded ? '收起' : '展开全文'} {isExpanded ? '↑' : '↓'}
                     </Text>
                   </View>
                 )}

@@ -3,8 +3,10 @@ import { View, Text, Input, Textarea, ScrollView, Button, Image, Picker } from '
 import Taro, { chooseImage } from '@tarojs/taro'
 import classnames from 'classnames'
 import styles from './index.module.scss'
+import { useAppStore } from '@/store'
 import { categories } from '@/data/categories'
-import { Category } from '@/types'
+import { Category, Skill } from '@/types'
+import { currentUser } from '@/data/user'
 
 const unitOptions = ['次', '小时', '天', '件', '个']
 
@@ -28,16 +30,15 @@ const PublishPage: React.FC = () => {
   const [serviceArea, setServiceArea] = useState('')
   const [uploadImages, setUploadImages] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const addSkill = useAppStore(state => state.addSkill)
 
   const canSubmit = selectedCategory && title.trim() && description.trim() && priceMin
 
   const handleCategorySelect = (category: Category) => {
-    console.log('[Publish] Category selected:', category.name)
     setSelectedCategory(selectedCategory === category.id ? null : category.id)
   }
 
   const handleTimeSlotToggle = (slot: string) => {
-    console.log('[Publish] Time slot toggle:', slot)
     setSelectedTimeSlots(prev =>
       prev.includes(slot)
         ? prev.filter(s => s !== slot)
@@ -53,23 +54,19 @@ const PublishPage: React.FC = () => {
   }
 
   const handleChooseImage = useCallback(async () => {
-    console.log('[Publish] Choosing image')
     try {
       const res = await chooseImage({
         count: 8 - uploadImages.length,
         sizeType: ['compressed'],
         sourceType: ['album', 'camera']
       })
-      console.log('[Publish] Images selected:', res.tempFilePaths.length)
       setUploadImages(prev => [...prev, ...res.tempFilePaths])
     } catch (e) {
-      console.error('[Publish] Choose image error:', e)
       Taro.showToast({ title: '取消选择', icon: 'none' })
     }
   }, [uploadImages.length])
 
   const handleDeleteImage = (index: number) => {
-    console.log('[Publish] Delete image at index:', index)
     setUploadImages(prev => prev.filter((_, i) => i !== index))
   }
 
@@ -79,22 +76,46 @@ const PublishPage: React.FC = () => {
       return
     }
 
-    console.log('[Publish] Submitting skill:', {
-      category: selectedCategory,
-      title,
-      description,
-      priceMin,
-      priceMax,
+    const category = categories.find(c => c.id === selectedCategory)
+    const now = new Date()
+    const pad = (n: number) => n.toString().padStart(2, '0')
+    const createdAt = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+
+    const newSkill: Skill = {
+      id: `s${Date.now()}`,
+      title: title.trim(),
+      categoryId: selectedCategory!,
+      categoryName: category?.name || '',
+      description: description.trim(),
+      priceMin: parseFloat(priceMin) || 0,
+      priceMax: parseFloat(priceMax) || parseFloat(priceMin) || 0,
       priceUnit,
-      timeSlots: selectedTimeSlots,
-      serviceArea,
-      images: uploadImages
-    })
+      provider: {
+        id: currentUser.id,
+        name: currentUser.name,
+        avatar: currentUser.avatar,
+        isVerified: currentUser.isVerified,
+        rating: 5.0,
+        completedOrders: 0,
+        neighborhood: currentUser.neighborhood
+      },
+      availableTime: selectedTimeSlots.length > 0 ? selectedTimeSlots : ['提前预约'],
+      serviceArea: serviceArea ? serviceArea.split(/[,，]/).map(s => s.trim()).filter(Boolean) : [currentUser.neighborhood],
+      images: uploadImages.length > 0 ? uploadImages : ['https://picsum.photos/id/64/750/500'],
+      reviews: [],
+      rating: 0,
+      reviewCount: 0,
+      isFavorite: false,
+      isVerified: currentUser.isVerified,
+      createdAt
+    }
 
     setIsSubmitting(true)
     Taro.showLoading({ title: '发布中...' })
 
     setTimeout(() => {
+      addSkill(newSkill)
+
       setIsSubmitting(false)
       Taro.hideLoading()
       Taro.showToast({ title: '发布成功！', icon: 'success' })
@@ -105,12 +126,13 @@ const PublishPage: React.FC = () => {
         setDescription('')
         setPriceMin('')
         setPriceMax('')
+        setPriceUnit('次')
         setSelectedTimeSlots([])
         setServiceArea('')
         setUploadImages([])
-        Taro.switchTab({ url: '/pages/mine/index' })
+        Taro.switchTab({ url: '/pages/index/index' })
       }, 1500)
-    }, 1500)
+    }, 1000)
   }
 
   return (
@@ -246,7 +268,6 @@ const PublishPage: React.FC = () => {
                 className={styles.uploadImage}
                 src={img}
                 mode='aspectFill'
-                onError={(e) => console.error('[Publish] Image error:', e)}
               />
               <View className={styles.deleteBtn} onClick={() => handleDeleteImage(index)}>×</View>
             </View>

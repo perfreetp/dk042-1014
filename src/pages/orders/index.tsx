@@ -5,7 +5,7 @@ import classnames from 'classnames'
 import styles from './index.module.scss'
 import OrderCard from '@/components/OrderCard'
 import EmptyState from '@/components/EmptyState'
-import { orders, getOrdersByStatus } from '@/data/orders'
+import { useAppStore } from '@/store'
 import { Order, OrderStatus } from '@/types'
 
 interface TabItem {
@@ -23,20 +23,19 @@ const tabs: TabItem[] = [
 
 const OrdersPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<OrderStatus | 'all'>('all')
+  const orders = useAppStore(state => state.orders)
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   const filteredOrders = useMemo(() => {
-    console.log('[Orders] Filtering orders by status:', activeTab)
-    return getOrdersByStatus(activeTab)
-  }, [activeTab])
+    if (activeTab === 'all') return orders
+    return orders.filter(o => o.status === activeTab)
+  }, [activeTab, orders])
 
   const handleTabClick = (key: OrderStatus | 'all') => {
-    console.log('[Orders] Tab clicked:', key)
     setActiveTab(key)
   }
 
   const handleAction = (action: string, order: Order) => {
-    console.log('[Orders] Action:', action, 'order:', order.id)
     switch (action) {
       case 'cancel':
         Taro.showModal({
@@ -50,10 +49,7 @@ const OrdersPage: React.FC = () => {
         })
         break
       case 'contact':
-        Taro.showToast({ title: '正在发起沟通...', icon: 'loading' })
-        setTimeout(() => {
-          Taro.showToast({ title: '沟通功能开发中', icon: 'none' })
-        }, 1000)
+        Taro.showToast({ title: '沟通功能开发中', icon: 'none' })
         break
       case 'review':
         Taro.navigateTo({
@@ -71,20 +67,12 @@ const OrdersPage: React.FC = () => {
   }
 
   const handlePullDownRefresh = () => {
-    console.log('[Orders] Pull down refresh')
     setIsRefreshing(true)
     setTimeout(() => {
       setIsRefreshing(false)
       Taro.stopPullDownRefresh()
     }, 1000)
   }
-
-  React.useEffect(() => {
-    Taro.eventCenter.on('__taroPullDownRefresh', handlePullDownRefresh)
-    return () => {
-      Taro.eventCenter.off('__taroPullDownRefresh', handlePullDownRefresh)
-    }
-  }, [])
 
   return (
     <ScrollView

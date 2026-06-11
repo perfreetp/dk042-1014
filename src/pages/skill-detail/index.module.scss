@@ -3,27 +3,320 @@
 .page {
   min-height: 100vh;
   background: $color-bg-page;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 120rpx);
+  position: relative;
 }
 
-.content {
-  padding: 80rpx $page-padding;
-  text-align: center;
+.scrollContent {
+  height: 100vh;
+  padding-bottom: 140rpx;
 }
 
-.icon {
-  font-size: 120rpx;
-  margin-bottom: $spacing-lg;
+.loadingWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
 }
 
-.title {
-  font-size: $font-size-xl;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
+.loadingText {
+  color: $color-text-tertiary;
+  font-size: $font-size-md;
+}
+
+.bannerSwiper {
+  height: 400rpx;
+}
+
+.bannerImage {
+  width: 100%;
+  height: 100%;
+}
+
+.infoCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin: -32rpx $page-padding 0;
+  position: relative;
+  z-index: 10;
+  box-shadow: $shadow-card;
+}
+
+.titleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: $spacing-sm;
 }
 
-.desc {
-  font-size: $font-size-md;
+.title {
+  font-size: 36rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  flex: 1;
+  margin-right: $spacing-sm;
+}
+
+.favoriteBtn {
+  font-size: 40rpx;
+  color: $color-primary;
+}
+
+.tagRow {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: $spacing-sm;
+  flex-wrap: wrap;
+}
+
+.categoryTag {
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+  background: rgba(255, 122, 69, 0.08);
+  color: $color-primary;
+  font-size: 22rpx;
+}
+
+.verifiedTag {
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+  background: rgba(54, 179, 126, 0.1);
+  color: $color-success;
+  font-size: 22rpx;
+}
+
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+  margin-bottom: $spacing-lg;
+}
+
+.priceSymbol {
+  font-size: 28rpx;
+  color: $color-price;
+  font-weight: $font-weight-medium;
+}
+
+.priceValue {
+  font-size: 40rpx;
+  color: $color-price;
+  font-weight: $font-weight-bold;
+}
+
+.priceUnit {
+  font-size: 24rpx;
   color: $color-text-tertiary;
+}
+
+.providerCard {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-md 0;
+  border-top: 1rpx solid $color-divider;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.providerAvatar {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: $radius-round;
+}
+
+.providerInfo {
+  flex: 1;
+}
+
+.providerName {
+  font-size: 30rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 8rpx;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.providerMeta {
+  display: flex;
+  gap: $spacing-sm;
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+}
+
+.sectionCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin: $spacing-md $page-padding 0;
+  box-shadow: $shadow-card;
+}
+
+.sectionTitle {
+  font-size: 32rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.sectionContent {
+  font-size: 28rpx;
+  color: $color-text-secondary;
+  line-height: 1.6;
+}
+
+.timeList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.timeItem {
+  font-size: 26rpx;
+  color: $color-text-secondary;
+  padding-left: 20rpx;
+  position: relative;
+}
+
+.areaTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.areaTag {
+  padding: 8rpx 20rpx;
+  border-radius: $radius-round;
+  background: rgba(255, 122, 69, 0.06);
+  color: $color-primary;
+  font-size: 24rpx;
+}
+
+.galleryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $spacing-sm;
+}
+
+.galleryImage {
+  aspect-ratio: 1;
+  border-radius: $radius-md;
+}
+
+.reviewList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.reviewItem {
+  padding-bottom: $spacing-lg;
+  border-bottom: 1rpx solid $color-divider;
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+}
+
+.reviewHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-sm;
+}
+
+.reviewAvatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: $radius-round;
+}
+
+.reviewInfo {
+  flex: 1;
+}
+
+.reviewName {
+  font-size: 26rpx;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  margin-bottom: 4rpx;
+}
+
+.reviewDate {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+.reviewContent {
+  font-size: 26rpx;
+  color: $color-text-secondary;
+  line-height: 1.6;
+  margin-bottom: $spacing-sm;
+}
+
+.reviewReply {
+  background: rgba(255, 122, 69, 0.04);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-top: $spacing-sm;
+}
+
+.reviewReplyText {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+  line-height: 1.5;
+}
+
+.bottomBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: $color-bg-card;
+  padding: $spacing-md $page-padding;
+  padding-bottom: calc(env(safe-area-inset-bottom) + #{$spacing-md});
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
+  display: flex;
+  gap: $spacing-sm;
+  z-index: 100;
+}
+
+.btnSecondary {
+  flex: 1;
+  height: 88rpx;
+  border-radius: $radius-round;
+  background: rgba(255, 122, 69, 0.1);
+  color: $color-primary;
+  font-size: 30rpx;
+  font-weight: $font-weight-medium;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.btnPrimary {
+  flex: 2;
+  height: 88rpx;
+  border-radius: $radius-round;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  color: $color-text-white;
+  font-size: 30rpx;
+  font-weight: $font-weight-semibold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
 }

@@ -102,6 +102,7 @@ export interface Notice {
   content: string
   type: 'system' | 'activity' | 'notice'
   createdAt: string
+  images?: string[]
 }
 
 export interface Discount {
@@ -112,6 +113,18 @@ export interface Discount {
   minAmount: number
   expireDate: string
   isUsed: boolean
+}
+
+export interface Coupon {
+  id: string
+  name: string
+  description: string
+  value: number
+  minAmount: number
+  expireDate: string
+  status: 'available' | 'used' | 'expired'
+  isUsed: boolean
+  images?: string[]
 }
 
 export interface FeedbackRecord {

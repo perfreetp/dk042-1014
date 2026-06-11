@@ -3,7 +3,7 @@ import { View, Text, Input, Swiper, SwiperItem, Image, ScrollView } from '@taroj
 import Taro from '@tarojs/taro'
 import styles from './index.module.scss'
 import SkillCard from '@/components/SkillCard'
-import { skills, getSkillsByCategory } from '@/data/skills'
+import { useAppStore } from '@/store'
 import { categories } from '@/data/categories'
 import { Skill, Category } from '@/types'
 
@@ -16,33 +16,39 @@ const bannerData = [
 const IndexPage: React.FC = () => {
   const [searchText, setSearchText] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [displaySkills, setDisplaySkills] = useState<Skill[]>(skills)
+  const storeSkills = useAppStore(state => state.skills)
+  const [displaySkills, setDisplaySkills] = useState<Skill[]>(storeSkills)
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   useEffect(() => {
-    console.log('[Home] Page loaded, skills count:', skills.length)
-  }, [])
+    applyFilter()
+  }, [storeSkills, selectedCategory])
+
+  const applyFilter = () => {
+    if (selectedCategory) {
+      setDisplaySkills(storeSkills.filter(s => s.categoryId === selectedCategory))
+    } else {
+      setDisplaySkills([...storeSkills])
+    }
+  }
 
   const handleCategoryClick = (category: Category) => {
-    console.log('[Home] Category clicked:', category.name)
     if (category.id === '8') {
       Taro.showToast({ title: '更多分类开发中', icon: 'none' })
       return
     }
     setSelectedCategory(selectedCategory === category.id ? null : category.id)
-    const filtered = selectedCategory === category.id
-      ? skills
-      : getSkillsByCategory(category.id)
-    setDisplaySkills(filtered)
   }
 
   const handleSearch = () => {
-    console.log('[Home] Search:', searchText)
     if (!searchText.trim()) {
-      setDisplaySkills(skills)
+      applyFilter()
       return
     }
-    const filtered = skills.filter(s =>
+    const source = selectedCategory
+      ? storeSkills.filter(s => s.categoryId === selectedCategory)
+      : storeSkills
+    const filtered = source.filter(s =>
       s.title.includes(searchText) ||
       s.description.includes(searchText) ||
       s.categoryName.includes(searchText)
@@ -51,10 +57,9 @@ const IndexPage: React.FC = () => {
   }
 
   const handlePullDownRefresh = () => {
-    console.log('[Home] Pull down refresh')
     setIsRefreshing(true)
     setTimeout(() => {
-      setDisplaySkills([...skills])
+      setDisplaySkills([...storeSkills])
       setIsRefreshing(false)
       Taro.stopPullDownRefresh()
     }, 1000)
@@ -65,7 +70,7 @@ const IndexPage: React.FC = () => {
     return () => {
       Taro.eventCenter.off('__taroPullDownRefresh', handlePullDownRefresh)
     }
-  }, [])
+  }, [storeSkills])
 
   return (
     <ScrollView
@@ -104,7 +109,6 @@ const IndexPage: React.FC = () => {
                   className={styles.bannerImage}
                   src={banner.image}
                   mode='aspectFill'
-                  onError={(e) => console.error('[Home] Banner image error:', e)}
                 />
                 <View className={styles.bannerOverlay}>
                   <Text className={styles.bannerTitle}>{banner.title}</Text>
