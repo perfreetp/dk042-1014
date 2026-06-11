@@ -56,6 +56,10 @@
     color: $color-primary;
   }
 
+  &.completing {
+    color: #722ED1;
+  }
+
   &.toReview {
     color: $color-error;
   }

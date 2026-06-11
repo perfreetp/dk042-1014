@@ -71,9 +71,36 @@ export interface Order {
   referenceImages: string[]
   createdAt: string
   updatedAt: string
+  fulfillmentRecords?: FulfillmentRecord[]
 }
 
-export type OrderStatus = 'pending' | 'confirmed' | 'inProgress' | 'toReview' | 'completed' | 'cancelled'
+export type OrderStatus = 'pending' | 'confirmed' | 'inProgress' | 'completing' | 'toReview' | 'completed' | 'cancelled'
+
+export interface FulfillmentRecord {
+  id: string
+  orderId: string
+  action: string
+  actionKey: 'created' | 'confirmed' | 'started' | 'submittedComplete' | 'customerRejected' | 'customerConfirmed' | 'reviewed' | 'cancelled'
+  operatorId: string
+  operatorName: string
+  operatorAvatar: string
+  remark?: string
+  createdAt: string
+}
+
+export interface CouponUsageRecord {
+  id: string
+  couponId: string
+  couponName: string
+  orderId: string
+  orderTitle: string
+  originalPrice: number
+  discountAmount: number
+  finalPrice: number
+  status: 'used' | 'refunded'
+  usedAt: string
+  refundedAt?: string
+}
 
 export interface User {
   id: string

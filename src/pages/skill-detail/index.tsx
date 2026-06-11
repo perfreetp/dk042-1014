@@ -10,7 +10,7 @@ const SkillDetailPage: React.FC = () => {
   const router = useRouter()
   const storeSkills = useAppStore(state => state.skills)
   const toggleFavorite = useAppStore(state => state.toggleFavorite)
-  const getOrCreateChatSession = useAppStore(state => state.getOrCreateChatSession)
+  const getOrCreateChatSessionBySkill = useAppStore(state => state.getOrCreateChatSessionBySkill)
   const [skill, setSkill] = useState<Skill | null>(null)
   const [isFavorite, setIsFavorite] = useState(false)
 
@@ -46,7 +46,7 @@ const SkillDetailPage: React.FC = () => {
 
   const handleContact = () => {
     if (!skill) return
-    const session = getOrCreateChatSession(
+    const session = getOrCreateChatSessionBySkill(
       skill.id,
       {
         id: skill.provider.id,

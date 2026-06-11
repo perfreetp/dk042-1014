@@ -15,7 +15,8 @@ const ChatPage: React.FC = () => {
   const storeSkills = useAppStore(state => state.skills)
   const storeOrders = useAppStore(state => state.orders)
   const chatMessages = useAppStore(state => state.chatMessages)
-  const getOrCreateChatSession = useAppStore(state => state.getOrCreateChatSession)
+  const getOrCreateChatSessionBySkill = useAppStore(state => state.getOrCreateChatSessionBySkill)
+  const getOrCreateChatSessionByOrder = useAppStore(state => state.getOrCreateChatSessionByOrder)
   const addMessage = useAppStore(state => state.addMessage)
 
   const [session, setSession] = useState<ChatSession | null>(null)
@@ -28,11 +29,7 @@ const ChatPage: React.FC = () => {
     if (orderId) {
       const order = storeOrders.find(o => o.id === orderId)
       if (order) {
-        const session = getOrCreateChatSession(
-          order.skillId,
-          { id: order.providerId, name: order.providerName, avatar: order.providerAvatar, isVerified: true },
-          { id: order.skillId, title: order.skillTitle, image: order.skillImage }
-        )
+        const session = getOrCreateChatSessionByOrder(order)
         setSession(session)
         const skillData = storeSkills.find(s => s.id === order.skillId)
         if (skillData) setSkill(skillData)
@@ -41,7 +38,7 @@ const ChatPage: React.FC = () => {
       const skillData = storeSkills.find(s => s.id === skillId)
       if (skillData) {
         setSkill(skillData)
-        const session = getOrCreateChatSession(
+        const session = getOrCreateChatSessionBySkill(
           skillData.id,
           {
             id: skillData.provider.id,
@@ -61,7 +58,7 @@ const ChatPage: React.FC = () => {
         if (skillData) setSkill(skillData)
       }
     }
-  }, [skillId, chatId, orderId, storeSkills, storeOrders, getOrCreateChatSession])
+  }, [skillId, chatId, orderId, storeSkills, storeOrders, getOrCreateChatSessionBySkill, getOrCreateChatSessionByOrder])
 
   useEffect(() => {
     if (session) {

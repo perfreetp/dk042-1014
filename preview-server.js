@@ -37,7 +37,9 @@ const pages = [
   { name: '实名认证页', path: 'pages/verification/index.tsx', type: '二级页面', icon: '✅' },
   { name: '邻里优惠页', path: 'pages/discount/index.tsx', type: '二级页面', icon: '🎫' },
   { name: '纠纷反馈页', path: 'pages/feedback/index.tsx', type: '二级页面', icon: '📢' },
-  { name: '平台公告页', path: 'pages/notice/index.tsx', type: '二级页面', icon: '📣' }
+  { name: '平台公告页', path: 'pages/notice/index.tsx', type: '二级页面', icon: '📣' },
+  { name: '聊天页', path: 'pages/chat/index.tsx', type: '二级页面', icon: '💬' },
+  { name: '优惠券使用明细', path: 'pages/coupon-usage/index.tsx', type: '二级页面', icon: '💳' }
 ];
 
 const components = [

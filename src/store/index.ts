@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { Skill, Order, Coupon, Notice, ChatMessage, ChatSession } from '@/types'
+import { Skill, Order, Coupon, Notice, ChatMessage, ChatSession, FulfillmentRecord, CouponUsageRecord } from '@/types'
 import { skills as initSkills } from '@/data/skills'
 import { orders as initOrders } from '@/data/orders'
 import { discounts as initDiscounts, notices as initNotices, currentUser } from '@/data/user'
@@ -11,13 +11,18 @@ interface AppState {
   notices: Notice[]
   chatSessions: ChatSession[]
   chatMessages: Record<string, ChatMessage[]>
+  couponUsageRecords: CouponUsageRecord[]
 
   addSkill: (skill: Skill) => void
   addOrder: (order: Order) => void
   updateOrder: (id: string, updates: Partial<Order>) => void
-  useCoupon: (id: string) => void
+  cancelOrder: (id: string) => void
+  addFulfillmentRecord: (orderId: string, record: Omit<FulfillmentRecord, 'id' | 'orderId' | 'createdAt'>) => void
+  useCoupon: (id: string, usage: Omit<CouponUsageRecord, 'id' | 'status' | 'usedAt'>) => void
+  refundCoupon: (couponId: string, orderId: string) => void
   toggleFavorite: (skillId: string) => void
-  getOrCreateChatSession: (skillId: string, otherUser: { id: string; name: string; avatar: string; isVerified: boolean }, skill: { id: string; title: string; image: string }) => ChatSession
+  getOrCreateChatSessionBySkill: (skillId: string, otherUser: { id: string; name: string; avatar: string; isVerified: boolean }, skill: { id: string; title: string; image: string }) => ChatSession
+  getOrCreateChatSessionByOrder: (order: Order) => ChatSession
   addMessage: (chatId: string, message: Omit<ChatMessage, 'id' | 'chatId' | 'createdAt'>) => void
   getMessages: (chatId: string) => ChatMessage[]
   calculateFinalPrice: (basePrice: number, couponId?: string) => { finalPrice: number; discount: number; coupon?: Coupon }
@@ -110,10 +115,43 @@ const initNoticeList: Notice[] = initNotices.map(n => ({
   images: [] as string[]
 }))
 
-const enrichedInitOrders: Order[] = initOrders.map(o => ({
-  ...o,
-  originalPrice: o.price
-}))
+const nowDateStr = () => new Date().toLocaleString('zh-CN')
+
+const makeFulfillmentRecord = (orderId: string, actionKey: FulfillmentRecord['actionKey'], action: string, operatorId: string, operatorName: string, operatorAvatar: string, remark?: string): FulfillmentRecord => ({
+  id: `fr_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+  orderId,
+  actionKey,
+  action,
+  operatorId,
+  operatorName,
+  operatorAvatar,
+  remark,
+  createdAt: nowDateStr()
+})
+
+const enrichedInitOrders: Order[] = initOrders.map(o => {
+  const records: FulfillmentRecord[] = [
+    makeFulfillmentRecord(o.id, 'created', '下单成功', o.customerId, o.customerName, o.customerAvatar)
+  ]
+  if (o.status === 'confirmed' || o.status === 'inProgress' || o.status === 'toReview' || o.status === 'completed') {
+    records.push(makeFulfillmentRecord(o.id, 'confirmed', '服务者确认接单', o.providerId, o.providerName, o.providerAvatar))
+  }
+  if (o.status === 'inProgress' || o.status === 'toReview' || o.status === 'completed') {
+    records.push(makeFulfillmentRecord(o.id, 'started', '开始服务', o.providerId, o.providerName, o.providerAvatar))
+  }
+  if (o.status === 'toReview' || o.status === 'completed') {
+    records.push(makeFulfillmentRecord(o.id, 'submittedComplete', '服务者提交完成申请', o.providerId, o.providerName, o.providerAvatar))
+    records.push(makeFulfillmentRecord(o.id, 'customerConfirmed', '下单人确认完成', o.customerId, o.customerName, o.customerAvatar))
+  }
+  if (o.status === 'completed') {
+    records.push(makeFulfillmentRecord(o.id, 'reviewed', '评价完成', o.customerId, o.customerName, o.customerAvatar))
+  }
+  return {
+    ...o,
+    originalPrice: o.price,
+    fulfillmentRecords: records
+  }
+})
 
 export const useAppStore = create<AppState>((set, get) => ({
   skills: [mySkill, ...initSkills],
@@ -122,6 +160,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   notices: initNoticeList,
   chatSessions: [],
   chatMessages: {},
+  couponUsageRecords: [],
 
   addSkill: (skill) => set((state) => ({
     skills: [skill, ...state.skills]
@@ -132,14 +171,78 @@ export const useAppStore = create<AppState>((set, get) => ({
   })),
 
   updateOrder: (id, updates) => set((state) => ({
-    orders: state.orders.map(o => o.id === id ? { ...o, ...updates, updatedAt: new Date().toLocaleString('zh-CN') } : o)
+    orders: state.orders.map(o => o.id === id ? { ...o, ...updates, updatedAt: nowDateStr() } : o)
   })),
 
-  useCoupon: (id) => set((state) => ({
-    coupons: state.coupons.map(c =>
-      c.id === id ? { ...c, status: 'used' as const, isUsed: true } : c
+  cancelOrder: (id) => {
+    const order = get().orders.find(o => o.id === id)
+    if (!order) return
+    if (order.couponId) {
+      get().refundCoupon(order.couponId, id)
+    }
+    const record = makeFulfillmentRecord(
+      id, 'cancelled', '订单已取消',
+      get().isCustomer(order) ? order.customerId : order.providerId,
+      get().isCustomer(order) ? order.customerName : order.providerName,
+      get().isCustomer(order) ? order.customerAvatar : order.providerAvatar
     )
-  })),
+    set((state) => ({
+      orders: state.orders.map(o =>
+        o.id === id
+          ? {
+              ...o,
+              status: 'cancelled',
+              updatedAt: nowDateStr(),
+              fulfillmentRecords: [...(o.fulfillmentRecords || []), record]
+            }
+          : o
+      )
+    }))
+  },
+
+  addFulfillmentRecord: (orderId, record) => {
+    const fullRecord: FulfillmentRecord = {
+      ...record,
+      id: `fr_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      orderId,
+      createdAt: nowDateStr()
+    }
+    set((state) => ({
+      orders: state.orders.map(o =>
+        o.id === orderId
+          ? { ...o, fulfillmentRecords: [...(o.fulfillmentRecords || []), fullRecord], updatedAt: nowDateStr() }
+          : o
+      )
+    }))
+  },
+
+  useCoupon: (id, usage) => {
+    const record: CouponUsageRecord = {
+      ...usage,
+      id: `cur_${Date.now()}_${id}`,
+      status: 'used',
+      usedAt: nowDateStr()
+    }
+    set((state) => ({
+      coupons: state.coupons.map(c =>
+        c.id === id ? { ...c, status: 'used' as const, isUsed: true } : c
+      ),
+      couponUsageRecords: [record, ...state.couponUsageRecords]
+    }))
+  },
+
+  refundCoupon: (couponId, orderId) => {
+    set((state) => ({
+      coupons: state.coupons.map(c =>
+        c.id === couponId && c.status === 'used' ? { ...c, status: 'available' as const, isUsed: false } : c
+      ),
+      couponUsageRecords: state.couponUsageRecords.map(r =>
+        r.couponId === couponId && r.orderId === orderId && r.status === 'used'
+          ? { ...r, status: 'refunded' as const, refundedAt: nowDateStr() }
+          : r
+      )
+    }))
+  },
 
   toggleFavorite: (skillId) => set((state) => ({
     skills: state.skills.map(s =>
@@ -147,7 +250,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     )
   })),
 
-  getOrCreateChatSession: (skillId, otherUser, skill) => {
+  getOrCreateChatSessionBySkill: (skillId, otherUser, skill) => {
     const existing = get().chatSessions.find(
       s => s.skillId === skillId && s.otherUserId === otherUser.id
     )
@@ -170,6 +273,19 @@ export const useAppStore = create<AppState>((set, get) => ({
       chatMessages: { ...state.chatMessages, [newSession.id]: [] }
     }))
     return newSession
+  },
+
+  getOrCreateChatSessionByOrder: (order) => {
+    const skill = get().skills.find(s => s.id === order.skillId)
+    const otherUser = get().isProvider(order)
+      ? { id: order.customerId, name: order.customerName, avatar: order.customerAvatar, isVerified: true }
+      : { id: order.providerId, name: order.providerName, avatar: order.providerAvatar, isVerified: true }
+    const skillInfo = {
+      id: order.skillId,
+      title: order.skillTitle,
+      image: order.skillImage
+    }
+    return get().getOrCreateChatSessionBySkill(order.skillId, otherUser, skillInfo)
   },
 
   addMessage: (chatId, message) => {

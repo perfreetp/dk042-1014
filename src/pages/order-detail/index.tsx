@@ -11,8 +11,9 @@ const statusMap: Record<OrderStatus, { text: string; desc: string; step: number 
   pending: { text: '待确认', desc: '等待服务者确认订单', step: 0 },
   confirmed: { text: '已确认', desc: '服务者已确认订单，请按时赴约', step: 1 },
   inProgress: { text: '进行中', desc: '服务正在进行中', step: 2 },
-  toReview: { text: '待评价', desc: '服务已完成，请给服务者评价', step: 3 },
-  completed: { text: '已完成', desc: '订单已完成', step: 4 },
+  completing: { text: '待确认完成', desc: '服务者已提交完成，等待下单人确认', step: 3 },
+  toReview: { text: '待评价', desc: '服务已完成，请给服务者评价', step: 4 },
+  completed: { text: '已完成', desc: '订单已完成', step: 5 },
   cancelled: { text: '已取消', desc: '订单已取消', step: -1 }
 }
 
@@ -20,23 +21,38 @@ const steps = [
   { key: 'pending', label: '待确认' },
   { key: 'confirmed', label: '已确认' },
   { key: 'inProgress', label: '进行中' },
+  { key: 'completing', label: '待确认' },
   { key: 'toReview', label: '待评价' },
   { key: 'completed', label: '已完成' }
 ]
 
+const fulfillmentIconMap: Record<string, string> = {
+  created: '📝',
+  confirmed: '✅',
+  started: '🚀',
+  submittedComplete: '📦',
+  customerConfirmed: '👍',
+  customerRejected: '⚠️',
+  reviewed: '⭐',
+  cancelled: '❌'
+}
+
 const OrderDetailPage: React.FC = () => {
   const router = useRouter()
   const storeOrders = useAppStore(state => state.orders)
-  const storeSkills = useAppStore(state => state.skills)
   const updateOrder = useAppStore(state => state.updateOrder)
-  const getOrCreateChatSession = useAppStore(state => state.getOrCreateChatSession)
-  const isProvider = useAppStore(state => state.isProvider)
-  const isCustomer = useAppStore(state => state.isCustomer)
+  const cancelOrder = useAppStore(state => state.cancelOrder)
+  const addFulfillmentRecord = useAppStore(state => state.addFulfillmentRecord)
+  const getOrCreateChatSessionByOrder = useAppStore(state => state.getOrCreateChatSessionByOrder)
+  const isProviderFn = useAppStore(state => state.isProvider)
+  const isCustomerFn = useAppStore(state => state.isCustomer)
   const [order, setOrder] = useState<Order | null>(null)
   const [showReview, setShowReview] = useState(false)
   const [rating, setRating] = useState(5)
   const [reviewContent, setReviewContent] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showRejectModal, setShowRejectModal] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
 
   useEffect(() => {
     const id = router.params.id
@@ -61,13 +77,12 @@ const OrderDetailPage: React.FC = () => {
     }
   }, [storeOrders, order?.id])
 
+  const asProvider = order ? isProviderFn(order) : false
+  const asCustomer = order ? isCustomerFn(order) : false
+
   const handleContact = () => {
     if (!order) return
-    const session = getOrCreateChatSession(
-      order.skillId,
-      { id: order.providerId, name: order.providerName, avatar: order.providerAvatar, isVerified: true },
-      { id: order.skillId, title: order.skillTitle, image: order.skillImage }
-    )
+    const session = getOrCreateChatSessionByOrder(order)
     Taro.navigateTo({
       url: `/pages/chat/index?chatId=${session.id}`
     })
@@ -79,18 +94,24 @@ const OrderDetailPage: React.FC = () => {
       case 'cancel':
         Taro.showModal({
           title: '确认取消',
-          content: '确定要取消这个订单吗？',
+          content: asProvider
+            ? '确定要取消这个订单吗？取消后优惠券将退回给下单人。'
+            : '确定要取消这个订单吗？取消后优惠券将退回。',
           success: (res) => {
             if (res.confirm) {
-              updateOrder(order.id, { status: 'cancelled' })
+              cancelOrder(order.id)
               Taro.showToast({ title: '订单已取消', icon: 'success' })
             }
           }
         })
         break
       case 'contact':
-      case 'reorder':
         handleContact()
+        break
+      case 'reorder':
+        Taro.navigateTo({
+          url: `/pages/skill-detail/index?id=${order.skillId}`
+        })
         break
       case 'confirm':
         Taro.showModal({
@@ -99,6 +120,13 @@ const OrderDetailPage: React.FC = () => {
           success: (res) => {
             if (res.confirm) {
               updateOrder(order.id, { status: 'confirmed' })
+              addFulfillmentRecord(order.id, {
+                actionKey: 'confirmed',
+                action: '服务者确认接单',
+                operatorId: order.providerId,
+                operatorName: order.providerName,
+                operatorAvatar: order.providerAvatar
+              })
               Taro.showToast({ title: '接单成功', icon: 'success' })
             }
           }
@@ -111,34 +139,62 @@ const OrderDetailPage: React.FC = () => {
           success: (res) => {
             if (res.confirm) {
               updateOrder(order.id, { status: 'inProgress' })
+              addFulfillmentRecord(order.id, {
+                actionKey: 'started',
+                action: '开始服务',
+                operatorId: order.providerId,
+                operatorName: order.providerName,
+                operatorAvatar: order.providerAvatar
+              })
               Taro.showToast({ title: '服务已开始', icon: 'success' })
             }
           }
         })
         break
-      case 'markDone':
+      case 'submitComplete':
         Taro.showModal({
-          title: '标记完成',
-          content: '请确认服务已完成，等待用户最终确认',
+          title: '提交完成申请',
+          content: '确认服务已完成？下单人将收到确认通知。',
           success: (res) => {
             if (res.confirm) {
-              updateOrder(order.id, { status: 'toReview' })
-              Taro.showToast({ title: '服务已标记完成', icon: 'success' })
+              updateOrder(order.id, { status: 'completing' })
+              addFulfillmentRecord(order.id, {
+                actionKey: 'submittedComplete',
+                action: '服务者提交完成申请',
+                operatorId: order.providerId,
+                operatorName: order.providerName,
+                operatorAvatar: order.providerAvatar
+              })
+              Taro.showToast({ title: '已提交完成申请', icon: 'success' })
             }
           }
         })
         break
-      case 'complete':
+      case 'customerConfirm':
         Taro.showModal({
           title: '确认完成',
-          content: '请确认服务已完成且满意，确认后订单将进入待评价状态',
+          content: '确认服务已完成且满意？确认后将进入评价环节。',
           success: (res) => {
             if (res.confirm) {
               updateOrder(order.id, { status: 'toReview' })
-              Taro.showToast({ title: '服务已完成，请评价', icon: 'success' })
+              addFulfillmentRecord(order.id, {
+                actionKey: 'customerConfirmed',
+                action: '下单人确认完成',
+                operatorId: order.customerId,
+                operatorName: order.customerName,
+                operatorAvatar: order.customerAvatar
+              })
+              Taro.showToast({ title: '已确认完成，请评价', icon: 'success' })
             }
           }
         })
+        break
+      case 'customerReject':
+        setShowRejectModal(true)
+        break
+      case 'markDone':
+      case 'complete':
+        handleAction('submitComplete')
         break
       case 'review':
         setShowReview(true)
@@ -148,7 +204,27 @@ const OrderDetailPage: React.FC = () => {
     }
   }
 
+  const handleSubmitReject = () => {
+    if (!order || !rejectReason.trim()) {
+      Taro.showToast({ title: '请填写补充说明', icon: 'none' })
+      return
+    }
+    updateOrder(order.id, { status: 'inProgress' })
+    addFulfillmentRecord(order.id, {
+      actionKey: 'customerRejected',
+      action: '下单人要求补充服务',
+      operatorId: order.customerId,
+      operatorName: order.customerName,
+      operatorAvatar: order.customerAvatar,
+      remark: rejectReason.trim()
+    })
+    setShowRejectModal(false)
+    setRejectReason('')
+    Taro.showToast({ title: '已通知服务者补充', icon: 'success' })
+  }
+
   const handleSubmitReview = () => {
+    if (!order) return
     if (!reviewContent.trim()) {
       Taro.showToast({ title: '请填写评价内容', icon: 'none' })
       return
@@ -156,9 +232,15 @@ const OrderDetailPage: React.FC = () => {
     setIsSubmitting(true)
     Taro.showLoading({ title: '提交中...' })
     setTimeout(() => {
-      if (order) {
-        updateOrder(order.id, { status: 'completed' })
-      }
+      updateOrder(order.id, { status: 'completed' })
+      addFulfillmentRecord(order.id, {
+        actionKey: 'reviewed',
+        action: `评价完成（${rating}星）`,
+        operatorId: order.customerId,
+        operatorName: order.customerName,
+        operatorAvatar: order.customerAvatar,
+        remark: reviewContent.trim()
+      })
       setIsSubmitting(false)
       Taro.hideLoading()
       Taro.showToast({ title: '评价成功！', icon: 'success' })
@@ -172,43 +254,51 @@ const OrderDetailPage: React.FC = () => {
   const renderActions = () => {
     if (!order) return null
     const actions: { key: string; label: string; primary?: boolean }[] = []
-    const asProvider = isProvider(order)
-    const asCustomer = isCustomer(order)
 
     if (asProvider) {
       switch (order.status) {
         case 'pending':
-          actions.push({ key: 'contact', label: '联系对方' })
+          actions.push({ key: 'contact', label: '联系下单人' })
+          actions.push({ key: 'cancel', label: '取消订单' })
           actions.push({ key: 'confirm', label: '确认接单', primary: true })
           break
         case 'confirmed':
-          actions.push({ key: 'contact', label: '联系对方' })
+          actions.push({ key: 'contact', label: '联系下单人' })
           actions.push({ key: 'start', label: '开始服务', primary: true })
           break
         case 'inProgress':
-          actions.push({ key: 'contact', label: '联系对方' })
-          actions.push({ key: 'markDone', label: '标记完成', primary: true })
+          actions.push({ key: 'contact', label: '联系下单人' })
+          actions.push({ key: 'submitComplete', label: '提交完成', primary: true })
+          break
+        case 'completing':
+          actions.push({ key: 'contact', label: '联系下单人' })
+          actions.push({ key: 'submitComplete', label: '再次提交', primary: true })
           break
         case 'toReview':
-            actions.push({ key: 'contact', label: '联系对方' })
-            break
+          actions.push({ key: 'contact', label: '联系下单人' })
+          break
         case 'completed':
-          actions.push({ key: 'reorder', label: '再次联系', primary: true })
+          actions.push({ key: 'contact', label: '联系下单人' })
           break
         default:
-          actions.push({ key: 'reorder', label: '再次联系', primary: true })
+          actions.push({ key: 'contact', label: '联系下单人', primary: true })
       }
     } else if (asCustomer) {
       switch (order.status) {
         case 'pending':
-          actions.push({ key: 'contact', label: '联系对方' })
+          actions.push({ key: 'contact', label: '联系服务者' })
           actions.push({ key: 'cancel', label: '取消订单', primary: true })
           break
         case 'confirmed':
-          actions.push({ key: 'contact', label: '联系对方' })
+          actions.push({ key: 'contact', label: '联系服务者', primary: true })
           break
         case 'inProgress':
-          actions.push({ key: 'contact', label: '联系对方' })
+          actions.push({ key: 'contact', label: '联系服务者', primary: true })
+          break
+        case 'completing':
+          actions.push({ key: 'contact', label: '联系服务者' })
+          actions.push({ key: 'customerReject', label: '要求补充' })
+          actions.push({ key: 'customerConfirm', label: '确认完成', primary: true })
           break
         case 'toReview':
           actions.push({ key: 'review', label: '去评价', primary: true })
@@ -295,6 +385,55 @@ const OrderDetailPage: React.FC = () => {
     )
   }
 
+  const renderTimeline = () => {
+    if (!order || !order.fulfillmentRecords || order.fulfillmentRecords.length === 0) {
+      return null
+    }
+    const records = [...order.fulfillmentRecords].reverse()
+
+    return (
+      <View className={styles.timelineCard}>
+        <Text className={styles.sectionTitle}>📜 履约记录</Text>
+        <View className={styles.timeline}>
+          {records.map((record, index) => (
+            <View key={record.id} className={styles.timelineItem}>
+              <View className={styles.timelineLeft}>
+                <View className={classnames(
+                  styles.timelineDot,
+                  index === 0 && styles.timelineDotFirst
+                )}>
+                  <Text>{fulfillmentIconMap[record.actionKey] || '📍'}</Text>
+                </View>
+                {index < records.length - 1 && (
+                  <View className={styles.timelineLine} />
+                )}
+              </View>
+              <View className={styles.timelineContent}>
+                <View className={styles.timelineHeader}>
+                  <Text className={styles.timelineAction}>{record.action}</Text>
+                  <Text className={styles.timelineTime}>{record.createdAt}</Text>
+                </View>
+                <View className={styles.timelineOperator}>
+                  <Image
+                    className={styles.timelineAvatar}
+                    src={record.operatorAvatar}
+                    mode='aspectFill'
+                  />
+                  <Text className={styles.timelineOperatorName}>{record.operatorName}</Text>
+                </View>
+                {record.remark && (
+                  <View className={styles.timelineRemark}>
+                    <Text>💬 {record.remark}</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          ))}
+        </View>
+      </View>
+    )
+  }
+
   if (!order) {
     return (
       <View className={styles.page}>
@@ -371,12 +510,14 @@ const OrderDetailPage: React.FC = () => {
                 <View className={styles.providerRow}>
                   <Image
                     className={styles.providerAvatar}
-                    src={order.providerAvatar}
+                    src={asProvider ? order.customerAvatar : order.providerAvatar}
                     mode='aspectFill'
                   />
                   <View className={styles.providerInfo}>
-                    <Text className={styles.providerName}>{order.providerName}</Text>
-                    <Text className={styles.providerDesc}>点击头像可联系对方</Text>
+                    <Text className={styles.providerName}>
+                      {asProvider ? `下单人：${order.customerName}` : `服务者：${order.providerName}`}
+                    </Text>
+                    <Text className={styles.providerDesc}>点击右侧联系{asProvider ? '下单人' : '服务者'}</Text>
                   </View>
                   <View className={styles.contactBtn} onClick={handleContact}>
                     <Text className={styles.contactText}>联系</Text>
@@ -397,6 +538,14 @@ const OrderDetailPage: React.FC = () => {
                   <Text className={styles.infoLabel}>需求描述</Text>
                   <Text className={styles.infoValue}>{order.requirement}</Text>
                 </View>
+                {order.couponId && (
+                  <View className={styles.infoRow}>
+                    <Text className={styles.infoLabel}>优惠券</Text>
+                    <Text className={classnames(styles.infoValue, styles.couponValueText)}>
+                      {order.couponName} -¥{order.couponDiscount?.toFixed(2)}
+                    </Text>
+                  </View>
+                )}
                 {order.referenceImages.length > 0 && (
                   <View className={styles.infoRow}>
                     <Text className={styles.infoLabel}>参考图片</Text>
@@ -413,6 +562,8 @@ const OrderDetailPage: React.FC = () => {
                   </View>
                 )}
               </View>
+
+              {renderTimeline()}
 
               <View className={styles.infoCard}>
                 <View className={styles.infoRow}>
@@ -440,6 +591,33 @@ const OrderDetailPage: React.FC = () => {
       <View className={styles.bottomBar}>
         {renderActions()}
       </View>
+
+      {showRejectModal && (
+        <View className={styles.modalMask} onClick={() => setShowRejectModal(false)}>
+          <View className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <Text className={styles.modalTitle}>要求补充服务</Text>
+            <Text className={styles.modalDesc}>
+              请描述需要补充的内容，服务者将重新完善服务。
+            </Text>
+            <Textarea
+              className={styles.modalTextarea}
+              placeholder='请输入需要补充的内容...'
+              value={rejectReason}
+              onInput={(e) => setRejectReason(e.detail.value)}
+              maxlength={200}
+              autoHeight
+            />
+            <View className={styles.modalActions}>
+              <View className={styles.modalBtnCancel} onClick={() => setShowRejectModal(false)}>
+                取消
+              </View>
+              <View className={styles.modalBtnConfirm} onClick={handleSubmitReject}>
+                提交
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   )
 }

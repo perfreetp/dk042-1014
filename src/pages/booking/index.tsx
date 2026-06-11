@@ -35,7 +35,8 @@ const BookingPage: React.FC = () => {
   const useCoupon = useAppStore(state => state.useCoupon)
   const calculateFinalPrice = useAppStore(state => state.calculateFinalPrice)
   const addMessage = useAppStore(state => state.addMessage)
-  const getOrCreateChatSession = useAppStore(state => state.getOrCreateChatSession)
+  const getOrCreateChatSessionBySkill = useAppStore(state => state.getOrCreateChatSessionBySkill)
+  const addFulfillmentRecord = useAppStore(state => state.addFulfillmentRecord)
   const [skill, setSkill] = useState<Skill | null>(null)
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
@@ -153,18 +154,35 @@ const BookingPage: React.FC = () => {
         requirement: requirement || '暂无特殊需求',
         referenceImages,
         createdAt,
-        updatedAt: createdAt
+        updatedAt: createdAt,
+        fulfillmentRecords: []
       }
 
       addOrder(newOrder)
 
+      addFulfillmentRecord(newOrder.id, {
+        actionKey: 'created',
+        action: '下单成功',
+        operatorId: 'me',
+        operatorName: '我',
+        operatorAvatar: 'https://picsum.photos/id/64/200/200'
+      })
+
       if (selectedCouponId) {
-        useCoupon(selectedCouponId)
+        useCoupon(selectedCouponId, {
+          couponId: selectedCouponId,
+          couponName: selectedCoupon!.name,
+          orderId: newOrder.id,
+          orderTitle: newOrder.skillTitle,
+          originalPrice: skill!.priceMin,
+          discountAmount: discount,
+          finalPrice: calcFinalPrice
+        })
       }
 
       let targetChatId = chatId
       if (!targetChatId) {
-        const session = getOrCreateChatSession(
+        const session = getOrCreateChatSessionBySkill(
           skill!.id,
           {
             id: skill!.provider.id,

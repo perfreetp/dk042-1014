@@ -15,7 +15,7 @@ const tabs = [
 const DiscountPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('available')
   const coupons = useAppStore(state => state.coupons)
-  const useCoupon = useAppStore(state => state.useCoupon)
+  const usageRecords = useAppStore(state => state.couponUsageRecords)
 
   const filteredCoupons = useMemo(() => {
     return coupons.filter(c => c.status === activeTab)
@@ -24,13 +24,18 @@ const DiscountPage: React.FC = () => {
   const availableCount = coupons.filter(c => c.status === 'available').length
   const cashCount = coupons.filter(c => c.status === 'available' && c.type === 'cash').length
   const discountCount = coupons.filter(c => c.status === 'available' && c.type === 'discount').length
+  const usedCount = usageRecords.filter(r => r.status === 'used').length
+  const refundedCount = usageRecords.filter(r => r.status === 'refunded').length
 
   const handleUseCoupon = (coupon: Coupon) => {
-    useCoupon(coupon.id)
-    Taro.showToast({ title: '优惠券已使用，正在跳转首页', icon: 'none' })
+    Taro.showToast({ title: '正在跳转首页找服务', icon: 'none' })
     setTimeout(() => {
       Taro.switchTab({ url: '/pages/index/index' })
-    }, 1500)
+    }, 1200)
+  }
+
+  const handleGoUsage = () => {
+    Taro.navigateTo({ url: '/pages/coupon-usage/index' })
   }
 
   const handleCouponClick = (coupon: Coupon) => {
@@ -55,8 +60,15 @@ const DiscountPage: React.FC = () => {
   return (
     <ScrollView scrollY className={styles.page}>
       <View className={styles.header}>
-        <Text className={styles.title}>邻里优惠</Text>
-        <Text className={styles.subtitle}>专属优惠，邻里共享</Text>
+        <View className={styles.headerRow}>
+          <View>
+            <Text className={styles.title}>邻里优惠</Text>
+            <Text className={styles.subtitle}>专属优惠，邻里共享</Text>
+          </View>
+          <View className={styles.usageEntry} onClick={handleGoUsage}>
+            <Text className={styles.usageEntryText}>使用明细 ›</Text>
+          </View>
+        </View>
         <View className={styles.couponStats}>
           <View className={styles.statItem}>
             <Text className={styles.statValue}>{availableCount}</Text>

@@ -15,7 +15,8 @@ export default defineAppConfig({
     'pages/discount/index',
     'pages/feedback/index',
     'pages/notice/index',
-    'pages/chat/index'
+    'pages/chat/index',
+    'pages/coupon-usage/index'
   ],
   window: {
     backgroundTextStyle: 'light',

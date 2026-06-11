@@ -383,3 +383,205 @@
     transform: scale(0.98);
   }
 }
+
+.couponValueText {
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.timelineCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  margin-bottom: $spacing-sm;
+  box-shadow: $shadow-card;
+}
+
+.timeline {
+  padding-left: 8rpx;
+}
+
+.timelineItem {
+  display: flex;
+  align-items: stretch;
+  min-height: 120rpx;
+}
+
+.timelineLeft {
+  width: 64rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.timelineDot {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: rgba(255, 122, 69, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  z-index: 2;
+
+  &.timelineDotFirst {
+    background: rgba(255, 122, 69, 0.18);
+    transform: scale(1.1);
+  }
+}
+
+.timelineLine {
+  width: 4rpx;
+  flex: 1;
+  background: rgba(255, 122, 69, 0.15);
+  margin-top: 8rpx;
+  margin-bottom: 8rpx;
+}
+
+.timelineContent {
+  flex: 1;
+  padding-left: $spacing-sm;
+  padding-bottom: $spacing-md;
+}
+
+.timelineHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.timelineAction {
+  font-size: 26rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.timelineTime {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+.timelineOperator {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 8rpx;
+}
+
+.timelineAvatar {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+}
+
+.timelineOperatorName {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+}
+
+.timelineRemark {
+  margin-top: 8rpx;
+  padding: $spacing-sm;
+  background: rgba(255, 122, 69, 0.04);
+  border-radius: $radius-md;
+  font-size: 24rpx;
+  color: $color-text-secondary;
+  line-height: 1.6;
+}
+
+.modalMask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: $page-padding;
+}
+
+.modalContent {
+  width: 100%;
+  max-width: 600rpx;
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  padding: $spacing-lg;
+  box-sizing: border-box;
+}
+
+.modalTitle {
+  font-size: 32rpx;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  display: block;
+  margin-bottom: 12rpx;
+  text-align: center;
+}
+
+.modalDesc {
+  font-size: 26rpx;
+  color: $color-text-secondary;
+  line-height: 1.6;
+  display: block;
+  margin-bottom: $spacing-md;
+  text-align: center;
+}
+
+.modalTextarea {
+  width: 100%;
+  min-height: 160rpx;
+  background: rgba(255, 122, 69, 0.04);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  font-size: 26rpx;
+  color: $color-text-primary;
+  box-sizing: border-box;
+  line-height: 1.6;
+  margin-bottom: $spacing-lg;
+}
+
+.modalActions {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.modalBtnCancel {
+  flex: 1;
+  height: 80rpx;
+  border-radius: $radius-round;
+  background: rgba(255, 122, 69, 0.1);
+  color: $color-primary;
+  font-size: 28rpx;
+  font-weight: $font-weight-medium;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.modalBtnConfirm {
+  flex: 1;
+  height: 80rpx;
+  border-radius: $radius-round;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  color: $color-text-white;
+  font-size: 28rpx;
+  font-weight: $font-weight-semibold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}

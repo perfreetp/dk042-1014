@@ -15,6 +15,7 @@ const statusMap: Record<OrderStatus, string> = {
   pending: '待确认',
   confirmed: '已确认',
   inProgress: '进行中',
+  completing: '待确认完成',
   toReview: '待评价',
   completed: '已完成',
   cancelled: '已取消'
@@ -25,6 +26,8 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onAction }) => {
   const isCustomer = useAppStore(state => state.isCustomer)
   const asProvider = isProvider(order)
   const asCustomer = isCustomer(order)
+
+  const contactLabel = asProvider ? '联系下单人' : (asCustomer ? '联系服务者' : '联系对方')
 
   const handleClick = () => {
     Taro.navigateTo({
@@ -47,50 +50,60 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onAction }) => {
     if (asProvider) {
       switch (order.status) {
         case 'pending':
-          actions.push({ key: 'contact', label: '联系对方' })
+          actions.push({ key: 'contact', label: contactLabel })
+          actions.push({ key: 'cancel', label: '取消订单' })
           actions.push({ key: 'confirm', label: '确认接单', primary: true })
           break
         case 'confirmed':
-          actions.push({ key: 'contact', label: '联系对方' })
+          actions.push({ key: 'contact', label: contactLabel })
           actions.push({ key: 'start', label: '开始服务', primary: true })
           break
         case 'inProgress':
-          actions.push({ key: 'contact', label: '联系对方' })
-          actions.push({ key: 'markDone', label: '标记完成', primary: true })
+          actions.push({ key: 'contact', label: contactLabel })
+          actions.push({ key: 'submitComplete', label: '提交完成', primary: true })
+          break
+        case 'completing':
+          actions.push({ key: 'contact', label: contactLabel })
+          actions.push({ key: 'submitComplete', label: '再次提交', primary: true })
           break
         case 'toReview':
-          actions.push({ key: 'contact', label: '联系对方' })
+          actions.push({ key: 'contact', label: contactLabel })
           break
         case 'completed':
-          actions.push({ key: 'contact', label: '联系对方' })
+          actions.push({ key: 'contact', label: contactLabel })
           break
         default:
-          actions.push({ key: 'contact', label: '联系对方', primary: true })
+          actions.push({ key: 'contact', label: contactLabel, primary: true })
       }
     } else if (asCustomer) {
       switch (order.status) {
         case 'pending':
-          actions.push({ key: 'cancel', label: '取消订单' })
-          actions.push({ key: 'contact', label: '联系对方', primary: true })
+          actions.push({ key: 'contact', label: contactLabel })
+          actions.push({ key: 'cancel', label: '取消订单', primary: true })
           break
         case 'confirmed':
-          actions.push({ key: 'contact', label: '联系对方', primary: true })
+          actions.push({ key: 'contact', label: contactLabel, primary: true })
           break
         case 'inProgress':
-          actions.push({ key: 'contact', label: '联系对方', primary: true })
+          actions.push({ key: 'contact', label: contactLabel, primary: true })
+          break
+        case 'completing':
+          actions.push({ key: 'contact', label: contactLabel })
+          actions.push({ key: 'customerReject', label: '要求补充' })
+          actions.push({ key: 'customerConfirm', label: '确认完成', primary: true })
           break
         case 'toReview':
           actions.push({ key: 'review', label: '去评价', primary: true })
           break
         case 'completed':
-          actions.push({ key: 'contact', label: '联系对方' })
+          actions.push({ key: 'contact', label: contactLabel })
           actions.push({ key: 'reorder', label: '再来一单', primary: true })
           break
         default:
           actions.push({ key: 'reorder', label: '再来一单', primary: true })
       }
     } else {
-      actions.push({ key: 'contact', label: '联系对方', primary: true })
+      actions.push({ key: 'contact', label: contactLabel, primary: true })
     }
 
     return actions.map(action => (
