@@ -72,6 +72,50 @@
   color: $color-text-white;
 }
 
+.couponEntry {
+  margin-top: $spacing-lg;
+  background: linear-gradient(135deg, #FFF3E8 0%, #FFE8D5 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-md $spacing-lg;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4rpx 16rpx rgba(255, 122, 69, 0.15);
+}
+
+.couponEntryLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.couponEntryIcon {
+  font-size: 48rpx;
+}
+
+.couponEntryInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.couponEntryTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+}
+
+.couponEntryDesc {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.couponEntryRight {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+
 .categorySection {
   margin-top: $spacing-lg;
   background: $color-bg-card;

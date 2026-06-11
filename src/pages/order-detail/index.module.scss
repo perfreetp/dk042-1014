@@ -89,6 +89,33 @@
   color: $color-price;
 }
 
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 12rpx;
+}
+
+.originalPrice {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+  text-decoration: line-through;
+}
+
+.couponTag {
+  font-size: 22rpx;
+  color: #fff;
+  background: $color-primary;
+  padding: 2rpx 10rpx;
+  border-radius: 8rpx;
+  font-weight: $font-weight-medium;
+}
+
+.finalPrice {
+  font-size: 32rpx;
+  font-weight: $font-weight-bold;
+  color: $color-price;
+}
+
 .providerRow {
   display: flex;
   align-items: center;

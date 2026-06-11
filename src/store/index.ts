@@ -20,6 +20,9 @@ interface AppState {
   getOrCreateChatSession: (skillId: string, otherUser: { id: string; name: string; avatar: string; isVerified: boolean }, skill: { id: string; title: string; image: string }) => ChatSession
   addMessage: (chatId: string, message: Omit<ChatMessage, 'id' | 'chatId' | 'createdAt'>) => void
   getMessages: (chatId: string) => ChatMessage[]
+  calculateFinalPrice: (basePrice: number, couponId?: string) => { finalPrice: number; discount: number; coupon?: Coupon }
+  isProvider: (order: Order) => boolean
+  isCustomer: (order: Order) => boolean
 }
 
 const mySkill: Skill = {
@@ -107,9 +110,14 @@ const initNoticeList: Notice[] = initNotices.map(n => ({
   images: [] as string[]
 }))
 
+const enrichedInitOrders: Order[] = initOrders.map(o => ({
+  ...o,
+  originalPrice: o.price
+}))
+
 export const useAppStore = create<AppState>((set, get) => ({
   skills: [mySkill, ...initSkills],
-  orders: [...initOrders],
+  orders: [...enrichedInitOrders],
   coupons: initCoupons,
   notices: initNoticeList,
   chatSessions: [],
@@ -124,7 +132,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   })),
 
   updateOrder: (id, updates) => set((state) => ({
-    orders: state.orders.map(o => o.id === id ? { ...o, ...updates, updatedAt: new Date().toISOString() } : o)
+    orders: state.orders.map(o => o.id === id ? { ...o, ...updates, updatedAt: new Date().toLocaleString('zh-CN') } : o)
   })),
 
   useCoupon: (id) => set((state) => ({
@@ -178,7 +186,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       },
       chatSessions: state.chatSessions.map(s =>
         s.id === chatId
-          ? { ...s, lastMessage: message.content, lastMessageTime: newMessage.createdAt }
+          ? { ...s, lastMessage: message.type === 'order' ? '[订单卡片]' : message.content, lastMessageTime: newMessage.createdAt }
           : s
       )
     }))
@@ -186,5 +194,34 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   getMessages: (chatId) => {
     return get().chatMessages[chatId] || []
+  },
+
+  calculateFinalPrice: (basePrice, couponId) => {
+    if (!couponId) {
+      return { finalPrice: basePrice, discount: 0 }
+    }
+    const coupon = get().coupons.find(c => c.id === couponId && c.status === 'available')
+    if (!coupon) {
+      return { finalPrice: basePrice, discount: 0 }
+    }
+    if (basePrice < coupon.minAmount) {
+      return { finalPrice: basePrice, discount: 0 }
+    }
+    if (coupon.type === 'cash') {
+      const finalPrice = Math.max(0, basePrice - coupon.value)
+      return { finalPrice, discount: coupon.value, coupon }
+    } else {
+      const finalPrice = Math.round(basePrice * coupon.value / 10 * 100) / 100
+      const discount = basePrice - finalPrice
+      return { finalPrice, discount, coupon }
+    }
+  },
+
+  isProvider: (order) => {
+    return order.providerId === currentUser.id
+  },
+
+  isCustomer: (order) => {
+    return order.customerId === currentUser.id
   }
 }))

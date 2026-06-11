@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { View, Text, Image, ScrollView, Button, Input, Textarea, Picker } from '@tarojs/components'
 import Taro, { useRouter, chooseImage } from '@tarojs/taro'
 import classnames from 'classnames'
 import styles from './index.module.scss'
 import { useAppStore } from '@/store'
-import { Skill, Order } from '@/types'
+import { Skill, Order, Coupon } from '@/types'
 
 const timeSlots = [
   '09:00-10:00',
@@ -18,17 +18,34 @@ const timeSlots = [
   '20:00-21:00'
 ]
 
+const statusMap: Record<string, string> = {
+  pending: '待确认',
+  confirmed: '已确认',
+  inProgress: '进行中',
+  toReview: '待评价',
+  completed: '已完成',
+  cancelled: '已取消'
+}
+
 const BookingPage: React.FC = () => {
   const router = useRouter()
   const storeSkills = useAppStore(state => state.skills)
+  const storeCoupons = useAppStore(state => state.coupons)
   const addOrder = useAppStore(state => state.addOrder)
+  const useCoupon = useAppStore(state => state.useCoupon)
+  const calculateFinalPrice = useAppStore(state => state.calculateFinalPrice)
+  const addMessage = useAppStore(state => state.addMessage)
+  const getOrCreateChatSession = useAppStore(state => state.getOrCreateChatSession)
   const [skill, setSkill] = useState<Skill | null>(null)
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
   const [serviceArea, setServiceArea] = useState('')
   const [requirement, setRequirement] = useState('')
   const [referenceImages, setReferenceImages] = useState<string[]>([])
+  const [selectedCouponId, setSelectedCouponId] = useState<string>('')
+  const [showCouponPicker, setShowCouponPicker] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const chatId = router.params.chatId as string
 
   useEffect(() => {
     const skillId = router.params.skillId
@@ -42,6 +59,25 @@ const BookingPage: React.FC = () => {
       }
     }
   }, [router.params.skillId, storeSkills])
+
+  const availableCoupons = useMemo(() => {
+    if (!skill) return []
+    return storeCoupons.filter(c => c.status === 'available' && skill.priceMin >= c.minAmount)
+  }, [skill, storeCoupons])
+
+  const selectedCoupon = useMemo(() => {
+    return storeCoupons.find(c => c.id === selectedCouponId)
+  }, [storeCoupons, selectedCouponId])
+
+  const priceResult = useMemo(() => {
+    if (!skill) return { originalPrice: 0, finalPrice: 0, discount: 0 }
+    const result = calculateFinalPrice(skill.priceMin, selectedCouponId)
+    return {
+      originalPrice: skill.priceMin,
+      finalPrice: result.finalPrice,
+      discount: result.discount
+    }
+  }, [skill, selectedCouponId, calculateFinalPrice])
 
   const canSubmit = skill && selectedDate && selectedTime && serviceArea.trim()
 
@@ -70,6 +106,15 @@ const BookingPage: React.FC = () => {
     setReferenceImages(prev => prev.filter((_, i) => i !== index))
   }
 
+  const handleCouponSelect = (coupon: Coupon) => {
+    if (selectedCouponId === coupon.id) {
+      setSelectedCouponId('')
+    } else {
+      setSelectedCouponId(coupon.id)
+    }
+    setShowCouponPicker(false)
+  }
+
   const handleSubmit = () => {
     if (!canSubmit) {
       Taro.showToast({ title: '请填写完整信息', icon: 'none' })
@@ -84,6 +129,8 @@ const BookingPage: React.FC = () => {
       const pad = (n: number) => n.toString().padStart(2, '0')
       const createdAt = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`
 
+      const { finalPrice: calcFinalPrice, discount } = calculateFinalPrice(skill!.priceMin, selectedCouponId)
+
       const newOrder: Order = {
         id: `o${Date.now()}`,
         skillId: skill!.id,
@@ -96,7 +143,11 @@ const BookingPage: React.FC = () => {
         customerName: '我',
         customerAvatar: 'https://picsum.photos/id/64/200/200',
         status: 'pending',
-        price: skill!.priceMin,
+        price: calcFinalPrice,
+        originalPrice: skill!.priceMin,
+        couponId: selectedCouponId || undefined,
+        couponName: selectedCoupon?.name,
+        couponDiscount: discount,
         bookingTime: `${selectedDate} ${selectedTime}`,
         serviceArea,
         requirement: requirement || '暂无特殊需求',
@@ -107,12 +158,53 @@ const BookingPage: React.FC = () => {
 
       addOrder(newOrder)
 
+      if (selectedCouponId) {
+        useCoupon(selectedCouponId)
+      }
+
+      let targetChatId = chatId
+      if (!targetChatId) {
+        const session = getOrCreateChatSession(
+          skill!.id,
+          {
+            id: skill!.provider.id,
+            name: skill!.provider.name,
+            avatar: skill!.provider.avatar,
+            isVerified: skill!.provider.isVerified
+          },
+          {
+            id: skill!.id,
+            title: skill!.title,
+            image: skill!.images[0]
+          }
+        )
+        targetChatId = session.id
+      }
+
+      addMessage(targetChatId!, {
+        senderId: 'me',
+        senderName: '我',
+        senderAvatar: 'https://picsum.photos/id/64/200/200',
+        type: 'order',
+        content: '我已下单，请查看',
+        orderInfo: {
+          orderId: newOrder.id,
+          skillTitle: skill!.title,
+          skillImage: skill!.images[0],
+          price: calcFinalPrice,
+          status: statusMap[newOrder.status],
+          bookingTime: `${selectedDate} ${selectedTime}`
+        }
+      })
+
       setIsSubmitting(false)
       Taro.hideLoading()
       Taro.showToast({ title: '预约成功！', icon: 'success' })
 
       setTimeout(() => {
-        Taro.switchTab({ url: '/pages/orders/index' })
+        Taro.redirectTo({
+          url: `/pages/order-detail/index?id=${newOrder.id}`
+        })
       }, 1500)
     }, 1000)
   }
@@ -234,16 +326,75 @@ const BookingPage: React.FC = () => {
           </Text>
         </View>
 
+        <View className={styles.formCard} onClick={() => setShowCouponPicker(!showCouponPicker)}>
+          <View className={styles.couponRow}>
+            <Text className={styles.formLabel}>优惠券</Text>
+            <View className={styles.couponSelect}>
+              {selectedCoupon ? (
+                <Text className={styles.selectedCoupon}>
+                  {selectedCoupon.type === 'cash' ? `减¥${selectedCoupon.value}` : `${selectedCoupon.value}折`}
+                  <Text style={{ color: '#86909C' }}> ›</Text>
+                </Text>
+              ) : availableCoupons.length > 0 ? (
+                <Text className={styles.couponHint}>
+                  {availableCoupons.length}张可用 <Text style={{ color: '#86909C' }}>›</Text>
+                </Text>
+              ) : (
+                <Text className={styles.placeholder}>暂无可用优惠券</Text>
+              )}
+            </View>
+          </View>
+        </View>
+
+        {showCouponPicker && availableCoupons.length > 0 && (
+          <View className={styles.couponPicker}>
+            {availableCoupons.map(coupon => (
+              <View
+                key={coupon.id}
+                className={classnames(
+                  styles.couponOption,
+                  selectedCouponId === coupon.id && styles.selected
+                )}
+                onClick={() => handleCouponSelect(coupon)}
+              >
+                <View className={classnames(
+                  styles.couponOptionLeft,
+                  coupon.type === 'discount' && styles.couponDiscount
+                )}>
+                  {coupon.type === 'cash' ? (
+                    <Text className={styles.couponValue}>¥{coupon.value}</Text>
+                  ) : (
+                    <Text className={styles.couponValue}>{coupon.value}折</Text>
+                  )}
+                  <Text className={styles.couponCondition}>满{coupon.minAmount}可用</Text>
+                </View>
+                <View className={styles.couponOptionRight}>
+                  <Text className={styles.couponName}>{coupon.name}</Text>
+                  <Text className={styles.couponDesc}>{coupon.description}</Text>
+                </View>
+                {selectedCouponId === coupon.id && (
+                  <Text className={styles.couponCheck}>✓</Text>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+
         <View style={{ height: '40rpx' }} />
       </ScrollView>
 
       <View className={styles.submitBar}>
         <View className={styles.totalPrice}>
           <Text className={styles.label}>预估价格</Text>
-          <View>
-            <Text className={styles.value}>¥{skill.priceMin}</Text>
-            {skill.priceMax > skill.priceMin && (
-              <Text style={{ fontSize: '26rpx', color: '#86909C' }}>-{skill.priceMax}</Text>
+          <View className={styles.priceDisplay}>
+            {selectedCouponId ? (
+              <>
+                <Text className={styles.originalPrice}>¥{priceResult.originalPrice}</Text>
+                <Text className={styles.finalPrice}>¥{priceResult.finalPrice.toFixed(2)}</Text>
+                <Text className={styles.discountTag}>已减¥{priceResult.discount.toFixed(2)}</Text>
+              </>
+            ) : (
+              <Text className={styles.finalPrice}>¥{skill.priceMin}</Text>
             )}
           </View>
         </View>

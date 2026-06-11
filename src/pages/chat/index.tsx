@@ -183,6 +183,28 @@ const ChatPage: React.FC = () => {
               mode='widthFix'
               onClick={() => Taro.previewImage({ urls: [msg.content] })}
             />
+          ) : msg.type === 'order' && msg.orderInfo ? (
+            <View className={styles.orderCard} onClick={() => handleOrderClick(msg.orderInfo!.orderId)}>
+              <View className={styles.orderCardHeader}>
+                <Text className={styles.orderCardTitle}>📋 订单信息</Text>
+                <Text className={styles.orderCardStatus}>{msg.orderInfo.status}</Text>
+              </View>
+              <View className={styles.orderCardBody}>
+                <Image
+                  className={styles.orderCardImage}
+                  src={msg.orderInfo.skillImage}
+                  mode='aspectFill'
+                />
+                <View className={styles.orderCardInfo}>
+                  <Text className={styles.orderCardSkill}>{msg.orderInfo.skillTitle}</Text>
+                  <Text className={styles.orderCardTime}>🕐 {msg.orderInfo.bookingTime}</Text>
+                  <Text className={styles.orderCardPrice}>¥{msg.orderInfo.price}</Text>
+                </View>
+              </View>
+              <View className={styles.orderCardFooter}>
+                <Text className={styles.orderCardAction}>查看订单 ›</Text>
+              </View>
+            </View>
           ) : (
             <View className={styles.messageBubble}>
               <Text>{msg.content}</Text>
@@ -192,6 +214,12 @@ const ChatPage: React.FC = () => {
         </View>
       </View>
     )
+  }
+
+  const handleOrderClick = (orderId: string) => {
+    Taro.navigateTo({
+      url: `/pages/order-detail/index?id=${orderId}`
+    })
   }
 
   if (!session || !skill) {

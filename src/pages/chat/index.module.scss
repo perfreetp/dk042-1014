@@ -195,6 +195,118 @@
   border-radius: 16rpx;
 }
 
+.orderCard {
+  background: #fff;
+  border-radius: 16rpx;
+  overflow: hidden;
+  width: 440rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.orderCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 20rpx;
+  background: linear-gradient(135deg, #FFF3E8 0%, #FFE8D5 100%);
+}
+
+.orderCardTitle {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #FF7A45;
+}
+
+.orderCardStatus {
+  font-size: 22rpx;
+  color: #FF7A45;
+  background: #fff;
+  padding: 4rpx 12rpx;
+  border-radius: 16rpx;
+}
+
+.orderCardBody {
+  display: flex;
+  gap: 16rpx;
+  padding: 16rpx 20rpx;
+}
+
+.orderCardImage {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+  flex-shrink: 0;
+}
+
+.orderCardInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.orderCardSkill {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #1D2129;
+  display: block;
+  margin-bottom: 8rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.orderCardTime {
+  font-size: 22rpx;
+  color: #86909C;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.orderCardPrice {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #FF7A45;
+}
+
+.orderCardFooter {
+  padding: 12rpx 20rpx;
+  border-top: 1rpx solid #F0F2F5;
+  text-align: right;
+}
+
+.orderCardAction {
+  font-size: 24rpx;
+  color: #FF7A45;
+  font-weight: 500;
+}
+
+.me .orderCard {
+  background: linear-gradient(135deg, #FF7A45 0%, #FF9A45 100%);
+
+  .orderCardHeader {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .orderCardTitle,
+  .orderCardStatus {
+    color: #fff;
+  }
+
+  .orderCardStatus {
+    background: rgba(255, 255, 255, 0.25);
+  }
+
+  .orderCardSkill,
+  .orderCardTime,
+  .orderCardPrice,
+  .orderCardAction {
+    color: #fff;
+  }
+
+  .orderCardFooter {
+    border-top-color: rgba(255, 255, 255, 0.2);
+  }
+}
+
 .messageTime {
   font-size: 22rpx;
   color: #C9CDD4;

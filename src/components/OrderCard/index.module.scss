@@ -91,10 +91,39 @@
   flex-shrink: 0;
 }
 
+.providerText {
+  flex: 1;
+  min-width: 0;
+}
+
 .providerName {
   font-size: $font-size-sm;
   color: $color-text-secondary;
   @include text-ellipsis;
+  display: block;
+}
+
+.roleTag {
+  font-size: 20rpx;
+  color: $color-primary;
+  background: $color-primary-light-bg;
+  padding: 2rpx 10rpx;
+  border-radius: 12rpx;
+  margin-top: 4rpx;
+  display: inline-block;
+}
+
+.priceWrap {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.originalPrice {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  text-decoration: line-through;
+  display: block;
+  margin-bottom: 4rpx;
 }
 
 .price {
@@ -132,6 +161,11 @@
   font-size: $font-size-sm;
   color: $color-text-primary;
   flex: 1;
+
+  &.couponValue {
+    color: $color-primary;
+    font-weight: $font-weight-medium;
+  }
 }
 
 .cardActions {

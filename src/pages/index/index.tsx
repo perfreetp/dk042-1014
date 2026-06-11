@@ -17,8 +17,15 @@ const IndexPage: React.FC = () => {
   const [searchText, setSearchText] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const storeSkills = useAppStore(state => state.skills)
+  const storeCoupons = useAppStore(state => state.coupons)
   const [displaySkills, setDisplaySkills] = useState<Skill[]>(storeSkills)
   const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const availableCoupons = storeCoupons.filter(c => c.status === 'available')
+
+  const handleCouponClick = () => {
+    Taro.navigateTo({ url: '/pages/discount/index' })
+  }
 
   useEffect(() => {
     applyFilter()
@@ -118,6 +125,22 @@ const IndexPage: React.FC = () => {
           ))}
         </Swiper>
       </View>
+
+      {availableCoupons.length > 0 && (
+        <View className={styles.couponEntry} onClick={handleCouponClick}>
+          <View className={styles.couponEntryLeft}>
+            <Text className={styles.couponEntryIcon}>🎫</Text>
+            <View className={styles.couponEntryInfo}>
+              <Text className={styles.couponEntryTitle}>你有 {availableCoupons.length} 张优惠券可用</Text>
+              <Text className={styles.couponEntryDesc}>下单立减，优惠多多</Text>
+            </View>
+          </View>
+          <View className={styles.couponEntryRight}>
+            <Text style={{ color: '#FF7A45', fontSize: '24rpx', fontWeight: '500' }}>去使用</Text>
+            <Text style={{ color: '#FF7A45', fontSize: '28rpx' }}>›</Text>
+          </View>
+        </View>
+      )}
 
       <View className={styles.categorySection}>
         <View className={styles.categoryGrid}>

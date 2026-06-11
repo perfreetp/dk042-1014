@@ -61,6 +61,10 @@ export interface Order {
   customerAvatar: string
   status: OrderStatus
   price: number
+  originalPrice: number
+  couponId?: string
+  couponName?: string
+  couponDiscount?: number
   bookingTime: string
   serviceArea: string
   requirement: string
@@ -134,8 +138,16 @@ export interface ChatMessage {
   senderId: string
   senderName: string
   senderAvatar: string
-  type: 'text' | 'image'
+  type: 'text' | 'image' | 'order'
   content: string
+  orderInfo?: {
+    orderId: string
+    skillTitle: string
+    skillImage: string
+    price: number
+    status: string
+    bookingTime: string
+  }
   createdAt: string
 }
 

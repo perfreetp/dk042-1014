@@ -16,6 +16,7 @@ interface TabItem {
 const tabs: TabItem[] = [
   { key: 'all', label: '全部' },
   { key: 'pending', label: '待确认' },
+  { key: 'confirmed', label: '已确认' },
   { key: 'inProgress', label: '进行中' },
   { key: 'toReview', label: '待评价' },
   { key: 'completed', label: '已完成' }
@@ -64,6 +65,42 @@ const OrdersPage: React.FC = () => {
           }
         })
         break
+      case 'confirm':
+        Taro.showModal({
+          title: '确认接单',
+          content: '确认接单后，请按时提供服务',
+          success: (res) => {
+            if (res.confirm) {
+              updateOrder(order.id, { status: 'confirmed' })
+              Taro.showToast({ title: '接单成功', icon: 'success' })
+            }
+          }
+        })
+        break
+      case 'start':
+        Taro.showModal({
+          title: '开始服务',
+          content: '确认开始服务后，订单状态将更新为进行中',
+          success: (res) => {
+            if (res.confirm) {
+              updateOrder(order.id, { status: 'inProgress' })
+              Taro.showToast({ title: '服务已开始', icon: 'success' })
+            }
+          }
+        })
+        break
+      case 'markDone':
+        Taro.showModal({
+          title: '标记完成',
+          content: '请确认服务已完成，等待用户最终确认',
+          success: (res) => {
+            if (res.confirm) {
+              updateOrder(order.id, { status: 'toReview' })
+              Taro.showToast({ title: '服务已标记完成', icon: 'success' })
+            }
+          }
+        })
+        break
       case 'contact':
         handleContact(order)
         break
@@ -75,18 +112,6 @@ const OrdersPage: React.FC = () => {
       case 'reorder':
         Taro.navigateTo({
           url: `/pages/skill-detail/index?id=${order.skillId}`
-        })
-        break
-      case 'complete':
-        Taro.showModal({
-          title: '确认完成',
-          content: '请确认服务已完成且满意，确认后订单将进入待评价状态',
-          success: (res) => {
-            if (res.confirm) {
-              updateOrder(order.id, { status: 'toReview' })
-              Taro.showToast({ title: '服务已完成', icon: 'success' })
-            }
-          }
         })
         break
       default:
@@ -119,7 +144,7 @@ const OrdersPage: React.FC = () => {
               onClick={() => handleTabClick(tab.key)}
             >
               <Text className={styles.tabText}>{tab.label}</Text>
-              {activeTab !== 'all' && orders.filter(o => o.status === tab.key).length > 0 && (
+              {tab.key !== 'all' && orders.filter(o => o.status === tab.key).length > 0 && (
                 <Text className={styles.tabBadge}>
                   {orders.filter(o => o.status === tab.key).length}
                 </Text>

@@ -20,6 +20,7 @@ const steps = [
   { key: 'pending', label: '待确认' },
   { key: 'confirmed', label: '已确认' },
   { key: 'inProgress', label: '进行中' },
+  { key: 'toReview', label: '待评价' },
   { key: 'completed', label: '已完成' }
 ]
 
@@ -29,6 +30,8 @@ const OrderDetailPage: React.FC = () => {
   const storeSkills = useAppStore(state => state.skills)
   const updateOrder = useAppStore(state => state.updateOrder)
   const getOrCreateChatSession = useAppStore(state => state.getOrCreateChatSession)
+  const isProvider = useAppStore(state => state.isProvider)
+  const isCustomer = useAppStore(state => state.isCustomer)
   const [order, setOrder] = useState<Order | null>(null)
   const [showReview, setShowReview] = useState(false)
   const [rating, setRating] = useState(5)
@@ -86,15 +89,44 @@ const OrderDetailPage: React.FC = () => {
         })
         break
       case 'contact':
+      case 'reorder':
         handleContact()
         break
       case 'confirm':
-        updateOrder(order.id, { status: 'confirmed' })
-        Taro.showToast({ title: '订单已确认', icon: 'success' })
+        Taro.showModal({
+          title: '确认接单',
+          content: '确认接单后，请按时提供服务',
+          success: (res) => {
+            if (res.confirm) {
+              updateOrder(order.id, { status: 'confirmed' })
+              Taro.showToast({ title: '接单成功', icon: 'success' })
+            }
+          }
+        })
         break
       case 'start':
-        updateOrder(order.id, { status: 'inProgress' })
-        Taro.showToast({ title: '服务已开始', icon: 'success' })
+        Taro.showModal({
+          title: '开始服务',
+          content: '确认开始服务后，订单状态将更新为进行中',
+          success: (res) => {
+            if (res.confirm) {
+              updateOrder(order.id, { status: 'inProgress' })
+              Taro.showToast({ title: '服务已开始', icon: 'success' })
+            }
+          }
+        })
+        break
+      case 'markDone':
+        Taro.showModal({
+          title: '标记完成',
+          content: '请确认服务已完成，等待用户最终确认',
+          success: (res) => {
+            if (res.confirm) {
+              updateOrder(order.id, { status: 'toReview' })
+              Taro.showToast({ title: '服务已标记完成', icon: 'success' })
+            }
+          }
+        })
         break
       case 'complete':
         Taro.showModal({
@@ -110,11 +142,6 @@ const OrderDetailPage: React.FC = () => {
         break
       case 'review':
         setShowReview(true)
-        break
-      case 'reorder':
-        Taro.navigateTo({
-          url: `/pages/skill-detail/index?id=${order.skillId}`
-        })
         break
       default:
         Taro.showToast({ title: `${action}功能开发中`, icon: 'none' })
@@ -145,29 +172,56 @@ const OrderDetailPage: React.FC = () => {
   const renderActions = () => {
     if (!order) return null
     const actions: { key: string; label: string; primary?: boolean }[] = []
+    const asProvider = isProvider(order)
+    const asCustomer = isCustomer(order)
 
-    switch (order.status) {
-      case 'pending':
-        actions.push({ key: 'contact', label: '联系对方' })
-        actions.push({ key: 'cancel', label: '取消订单', primary: true })
-        break
-      case 'confirmed':
-        actions.push({ key: 'contact', label: '联系对方' })
-        actions.push({ key: 'start', label: '开始服务', primary: true })
-        break
-      case 'inProgress':
-        actions.push({ key: 'contact', label: '联系对方' })
-        actions.push({ key: 'complete', label: '完成服务', primary: true })
-        break
-      case 'toReview':
-        actions.push({ key: 'review', label: '去评价', primary: true })
-        break
-      case 'completed':
-        actions.push({ key: 'contact', label: '再次联系' })
-        actions.push({ key: 'reorder', label: '再来一单', primary: true })
-        break
-      default:
-        actions.push({ key: 'reorder', label: '再来一单', primary: true })
+    if (asProvider) {
+      switch (order.status) {
+        case 'pending':
+          actions.push({ key: 'contact', label: '联系对方' })
+          actions.push({ key: 'confirm', label: '确认接单', primary: true })
+          break
+        case 'confirmed':
+          actions.push({ key: 'contact', label: '联系对方' })
+          actions.push({ key: 'start', label: '开始服务', primary: true })
+          break
+        case 'inProgress':
+          actions.push({ key: 'contact', label: '联系对方' })
+          actions.push({ key: 'markDone', label: '标记完成', primary: true })
+          break
+        case 'toReview':
+            actions.push({ key: 'contact', label: '联系对方' })
+            break
+        case 'completed':
+          actions.push({ key: 'reorder', label: '再次联系', primary: true })
+          break
+        default:
+          actions.push({ key: 'reorder', label: '再次联系', primary: true })
+      }
+    } else if (asCustomer) {
+      switch (order.status) {
+        case 'pending':
+          actions.push({ key: 'contact', label: '联系对方' })
+          actions.push({ key: 'cancel', label: '取消订单', primary: true })
+          break
+        case 'confirmed':
+          actions.push({ key: 'contact', label: '联系对方' })
+          break
+        case 'inProgress':
+          actions.push({ key: 'contact', label: '联系对方' })
+          break
+        case 'toReview':
+          actions.push({ key: 'review', label: '去评价', primary: true })
+          break
+        case 'completed':
+          actions.push({ key: 'contact', label: '再次联系' })
+          actions.push({ key: 'reorder', label: '再来一单', primary: true })
+          break
+        default:
+          actions.push({ key: 'reorder', label: '再来一单', primary: true })
+      }
+    } else {
+      actions.push({ key: 'contact', label: '联系对方', primary: true })
     }
 
     if (showReview) {
@@ -301,7 +355,17 @@ const OrderDetailPage: React.FC = () => {
                   />
                   <View className={styles.skillInfo}>
                     <Text className={styles.skillTitle}>{order.skillTitle}</Text>
-                    <Text className={styles.skillPrice}>¥{order.price}</Text>
+                    <View className={styles.priceRow}>
+                      {order.couponId ? (
+                        <>
+                          <Text className={styles.originalPrice}>¥{order.originalPrice}</Text>
+                          <Text className={styles.couponTag}>-¥{order.couponDiscount?.toFixed(2)}</Text>
+                          <Text className={styles.finalPrice}>¥{order.price}</Text>
+                        </>
+                      ) : (
+                        <Text className={styles.skillPrice}>¥{order.price}</Text>
+                      )}
+                    </View>
                   </View>
                 </View>
                 <View className={styles.providerRow}>

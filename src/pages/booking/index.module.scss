@@ -230,6 +230,142 @@
   margin-top: $spacing-md;
 }
 
+.couponRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .formLabel {
+    margin-bottom: 0;
+  }
+}
+
+.couponSelect {
+  display: flex;
+  align-items: center;
+}
+
+.selectedCoupon {
+  font-size: $font-size-md;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.couponHint {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.couponPicker {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-sm;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+  border: 2rpx solid $color-primary;
+}
+
+.couponOption {
+  display: flex;
+  align-items: center;
+  padding: $spacing-sm;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-xs;
+  position: relative;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &.selected {
+    background: rgba(255, 122, 69, 0.08);
+  }
+}
+
+.couponOptionLeft {
+  width: 160rpx;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  color: $color-text-white;
+  padding: $spacing-sm;
+  border-radius: $radius-md;
+  text-align: center;
+  flex-shrink: 0;
+  margin-right: $spacing-sm;
+
+  &.couponDiscount {
+    background: linear-gradient(135deg, #765FD3 0%, #9B8AE6 100%);
+  }
+}
+
+.couponValue {
+  font-size: 36rpx;
+  font-weight: $font-weight-bold;
+  display: block;
+  line-height: 1.2;
+}
+
+.couponCondition {
+  font-size: 20rpx;
+  opacity: 0.9;
+  margin-top: 4rpx;
+  display: block;
+}
+
+.couponOptionRight {
+  flex: 1;
+  min-width: 0;
+}
+
+.couponName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.couponDesc {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  display: block;
+}
+
+.couponCheck {
+  font-size: 32rpx;
+  color: $color-primary;
+  font-weight: $font-weight-bold;
+  flex-shrink: 0;
+}
+
+.priceDisplay {
+  display: flex;
+  align-items: baseline;
+  gap: $spacing-xs;
+  flex-wrap: wrap;
+}
+
+.totalPrice .originalPrice {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  text-decoration: line-through;
+}
+
+.finalPrice {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-price;
+}
+
+.discountTag {
+  font-size: 22rpx;
+  color: $color-text-white;
+  background: $color-primary;
+  padding: 2rpx 12rpx;
+  border-radius: 8rpx;
+  font-weight: $font-weight-medium;
+}
+
 .submitBar {
   position: fixed;
   bottom: 0;
